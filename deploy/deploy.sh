@@ -68,6 +68,10 @@ if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
   echo "   running migrations…"
   npx prisma migrate deploy
 fi
+if [ "${RUN_DB_PUSH:-0}" = "1" ]; then
+  echo "   pushing schema to DB (prisma db push)…"
+  npx prisma db push --skip-generate --accept-data-loss
+fi
 if [ "${RUN_SEED:-0}" = "1" ]; then
   echo "   running seed…"
   npx prisma db seed || true

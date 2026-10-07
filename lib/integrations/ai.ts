@@ -1,7 +1,9 @@
-// AI layer. Works today with deterministic heuristics; when ANTHROPIC_API_KEY is
-// set, the assistant and CV parser call the real model. No-throw everywhere.
+// AI layer. Works today with deterministic heuristics; when an AI key is set
+// (OpenAI preferred, Anthropic optional), the assistant and generators call the
+// real model. No-throw everywhere.
 
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001";
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001";
 
 type MatchInput = {
   candidate: { profession?: string | null; skills?: string[]; experienceYrs?: number; saudiExpYrs?: number };
@@ -24,6 +26,25 @@ export function aiMatchScore({ candidate, requirement }: MatchInput): { score: n
   return { score, skills: Math.max(50, skills), experience: Math.max(40, experience) };
 }
 
+async function callOpenAI(system: string, user: string): Promise<string | null> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return null;
+  try {
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        max_tokens: 1024,
+        messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data?.choices?.[0]?.message?.content ?? null;
+  } catch { return null; }
+}
+
 async function callAnthropic(system: string, user: string): Promise<string | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
@@ -31,7 +52,7 @@ async function callAnthropic(system: string, user: string): Promise<string | nul
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 1024, system, messages: [{ role: "user", content: user }] }),
+      body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 1024, system, messages: [{ role: "user", content: user }] }),
     });
     if (!r.ok) return null;
     const data = await r.json();
@@ -39,9 +60,14 @@ async function callAnthropic(system: string, user: string): Promise<string | nul
   } catch { return null; }
 }
 
+// Unified LLM call: OpenAI (GPT) first, Anthropic as optional fallback.
+async function callLLM(system: string, user: string): Promise<string | null> {
+  return (await callOpenAI(system, user)) ?? (await callAnthropic(system, user));
+}
+
 // Parse a CV into structured fields. Heuristic fallback extracts obvious patterns.
 export async function parseCV(text: string): Promise<{ ai: boolean; data: Record<string, unknown> }> {
-  const llm = await callAnthropic(
+  const llm = await callLLM(
     "You extract structured data from CVs. Reply with compact JSON: {name, email, phone, profession, skills:[], experienceYears, education}.",
     text.slice(0, 8000),
   );
@@ -55,7 +81,7 @@ export async function parseCV(text: string): Promise<{ ai: boolean; data: Record
 // Generate a professional job description / requirement brief.
 export async function generateJobDescription(input: { profession: string; quantity?: string; location?: string; experience?: string }): Promise<{ ai: boolean; text: string }> {
   const { profession, quantity, location, experience } = input;
-  const llm = await callAnthropic(
+  const llm = await callLLM(
     "You write concise, professional manpower recruitment briefs for a global staffing platform. 120-180 words. Include role summary, key responsibilities, requirements, and what the employer offers. No markdown headers, plain paragraphs and short bullet lines.",
     `Profession: ${profession}\nQuantity: ${quantity ?? "—"}\nLocation: ${location ?? "—"}\nExperience: ${experience ?? "—"}`,
   );
@@ -81,7 +107,7 @@ We offer:
 
 // Generate interview questions for a role.
 export async function interviewQuestions(profession: string, experience?: string): Promise<{ ai: boolean; questions: string[] }> {
-  const llm = await callAnthropic(
+  const llm = await callLLM(
     "You generate 6 concise interview questions for a trade/technical role. Return ONLY the questions, one per line, no numbering.",
     `Role: ${profession}. Experience level: ${experience ?? "any"}.`,
   );
@@ -102,7 +128,7 @@ export async function interviewQuestions(profession: string, experience?: string
 
 // Admin assistant. Answers from supplied platform context; uses the model when available.
 export async function assistantAnswer(question: string, context: Record<string, unknown>): Promise<{ ai: boolean; answer: string }> {
-  const llm = await callAnthropic(
+  const llm = await callLLM(
     "You are ForcePK AI, an assistant for a recruitment platform owner. Answer concisely using ONLY the JSON context provided. If the answer isn't in the context, say what data would be needed.",
     `Context:\n${JSON.stringify(context)}\n\nQuestion: ${question}`,
   );
