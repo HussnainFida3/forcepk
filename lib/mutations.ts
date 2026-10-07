@@ -194,11 +194,51 @@ export async function rejectApplication(applicationId: string) {
 }
 
 // ── Admin: verify / suspend a company ──
-export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED") {
+export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED" | "PENDING") {
   await prisma.company.update({ where: { id: companyId }, data: { status } });
   await log("company.status", "Company", companyId);
   await notifyCompanyUsers(companyId, `Your company was ${status.toLowerCase()}`, "Admin updated your verification status.");
   revalidatePath("/admin");
+  revalidatePath("/admin/companies");
+  revalidatePath(`/admin/companies/${companyId}`);
+}
+
+// ── Admin: edit a company's profile ──
+export async function updateCompany(companyId: string, formData: FormData) {
+  const g = (k: string) => { const v = String(formData.get(k) ?? "").trim(); return v || null; };
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      name: g("name") ?? undefined,
+      contactName: g("contactName"),
+      email: g("email"),
+      phone: g("phone"),
+      city: g("city"),
+      industry: g("industry"),
+      website: g("website"),
+      about: g("about"),
+    },
+  });
+  await log("company.update", "Company", companyId);
+  revalidatePath("/admin/companies");
+  revalidatePath(`/admin/companies/${companyId}`);
+  redirect(`/admin/companies/${companyId}?saved=1`);
+}
+
+// ── Admin: permanently delete a company (and its dependent records) ──
+export async function deleteCompany(companyId: string) {
+  // Remove dependent rows first to satisfy FK constraints, then the company.
+  await prisma.$transaction([
+    prisma.application.deleteMany({ where: { requirement: { companyId } } }),
+    prisma.requirement.deleteMany({ where: { companyId } }),
+    prisma.invoice.deleteMany({ where: { companyId } }),
+    prisma.replacementCase.deleteMany({ where: { companyId } }),
+    prisma.company.delete({ where: { id: companyId } }),
+  ]);
+  await log("company.delete", "Company", companyId);
+  revalidatePath("/admin/companies");
+  revalidatePath("/admin");
+  redirect("/admin/companies?deleted=1");
 }
 
 export async function setOepStatus(oepId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED") {

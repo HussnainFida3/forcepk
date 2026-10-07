@@ -204,6 +204,45 @@ export async function getAdminStats() {
   };
 }
 
+// Live, real-time "Urgent Actions" for the Command Center. Every number is a
+// direct database count — nothing hardcoded.
+export async function getUrgentActions() {
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
+  const in30Days = new Date(); in30Days.setDate(in30Days.getDate() + 30);
+
+  const [reqsNeedingCandidates, missingDocs, interviewsToday, pendingCompanies, expiringLicenses, selectedProcessing] = await Promise.all([
+    prisma.requirement.count({ where: { status: "OPEN", applications: { none: {} } } }),
+    prisma.document.count({ where: { status: { in: ["MISSING", "EXPIRED"] } } }),
+    prisma.interview.count({ where: { scheduledAt: { gte: startOfToday, lte: endOfToday } } }),
+    prisma.company.count({ where: { status: "PENDING" } }),
+    prisma.oep.count({ where: { licenseExpiry: { not: null, lte: in30Days } } }),
+    prisma.application.count({ where: { stage: "SELECTED" } }),
+  ]);
+
+  return [
+    { t: `${reqsNeedingCandidates} requirements need candidates`, tone: "amber", icon: "doc", href: "/admin/requirements", n: reqsNeedingCandidates },
+    { t: `${missingDocs} documents missing or expired`, tone: "red", icon: "shield", href: "/admin/documents", n: missingDocs },
+    { t: `${interviewsToday} interviews scheduled today`, tone: "blue", icon: "chat", href: "/admin/candidates", n: interviewsToday },
+    { t: `${pendingCompanies} companies awaiting verification`, tone: "navy", icon: "building", href: "/admin/companies", n: pendingCompanies },
+    { t: `${expiringLicenses} partner licenses expiring soon`, tone: "amber", icon: "handshake", href: "/admin/oeps", n: expiringLicenses },
+    { t: `${selectedProcessing} selected candidates awaiting processing`, tone: "purple", icon: "clock", href: "/admin/candidates", n: selectedProcessing },
+  ].filter((a) => a.n > 0);
+}
+
+// Full company record for the admin detail page.
+export async function getCompanyDetail(id: string) {
+  return prisma.company.findUnique({
+    where: { id },
+    include: {
+      requirements: { orderBy: { createdAt: "desc" }, take: 20, select: { id: true, refCode: true, title: true, profession: true, location: true, quantity: true, status: true, priority: true, createdAt: true } },
+      invoices: { orderBy: { issuedAt: "desc" }, take: 10, select: { id: true, amount: true, currency: true, status: true, issuedAt: true } },
+      users: { select: { id: true, name: true, email: true, role: true } },
+      _count: { select: { requirements: true, invoices: true, replacements: true } },
+    },
+  });
+}
+
 // Live employer dashboard stats.
 export async function getEmployerStats(companyId?: string) {
   const where = companyId ? { companyId } : {};

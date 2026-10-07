@@ -1,4 +1,5 @@
 import Icon from "@/components/Icon";
+import StatCard from "@/components/ui/StatCard";
 import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge, CHART_COLORS } from "@/components/ui/charts";
 import { getCommandCenter } from "@/lib/queries";
 
@@ -24,13 +25,7 @@ export default async function ReportsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cc.kpis.slice(0, 4).map((k) => (
-          <div key={k.label} className="card p-5">
-            <div className="text-xs text-navy/55">{k.label}</div>
-            <div className="mt-1 text-3xl font-extrabold text-navy">{k.value.toLocaleString()}</div>
-            <div className="mt-1 text-xs text-brand-dark">▲ {k.delta}% vs last period</div>
-          </div>
-        ))}
+        {cc.kpis.slice(0, 4).map((k) => <StatCard key={k.label} {...k} />)}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

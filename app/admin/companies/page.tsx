@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { setCompanyStatus } from "@/lib/mutations";
 
@@ -22,8 +23,11 @@ export default async function AdminCompanies() {
                 <td className="px-5 py-3 text-navy/70">{c._count.requirements}</td>
                 <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone[c.status]}`}>{c.status}</span></td>
                 <td className="px-5 py-3"><div className="flex justify-end gap-2">
+                  <Link href={`/admin/companies/${c.id}`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy/70 hover:border-brand hover:text-brand">View</Link>
                   {c.status !== "VERIFIED" && <form action={setCompanyStatus.bind(null, c.id, "VERIFIED")}><button className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">Verify</button></form>}
-                  {c.status !== "SUSPENDED" && <form action={setCompanyStatus.bind(null, c.id, "SUSPENDED")}><button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Suspend</button></form>}
+                  {c.status === "SUSPENDED"
+                    ? <form action={setCompanyStatus.bind(null, c.id, "VERIFIED")}><button className="rounded-md border border-brand/30 px-3 py-1.5 text-xs font-semibold text-brand-dark hover:bg-brand/5">Reactivate</button></form>
+                    : <form action={setCompanyStatus.bind(null, c.id, "SUSPENDED")}><button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Suspend</button></form>}
                 </div></td>
               </tr>
             ))}
