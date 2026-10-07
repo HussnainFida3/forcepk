@@ -466,3 +466,52 @@ model ReplacementCase {
 
   @@index([status])
 }
+
+// ─── AI Agent task scheduler + action audit ─────────────────────────
+
+enum TaskKind {
+  ONCE       // run once, now
+  UNTIL      // run repeatedly until targetCount reached
+  RECURRING  // run every intervalSec forever (until cancelled)
+}
+
+enum TaskStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+  CANCELLED
+}
+
+model AgentTask {
+  id          String     @id @default(cuid())
+  agent       String     // agent key, e.g. "lead-gen"
+  command     String     // natural-language instruction
+  kind        TaskKind   @default(ONCE)
+  status      TaskStatus @default(PENDING)
+  targetCount Int?       // for UNTIL tasks
+  progress    Int        @default(0)
+  intervalSec Int?       // for RECURRING tasks
+  runs        Int        @default(0)
+  result      String?    // last run summary
+  createdBy   String?    // user id that scheduled it
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status])
+  @@index([agent])
+}
+
+model AgentActionLog {
+  id        String   @id @default(cuid())
+  agent     String
+  action    String
+  detail    String?
+  ok        Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([agent])
+  @@index([createdAt])
+}
