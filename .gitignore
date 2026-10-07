@@ -6,6 +6,7 @@
 *.pem
 .env*
 !.env.example
+!.env.production.example
 next-env.d.ts
 /.pgdata
 /scripts/*.log
