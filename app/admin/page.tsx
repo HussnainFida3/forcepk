@@ -133,7 +133,7 @@ export default async function CommandCenter() {
             <span className="chip">{pendingCompanies.length} pending</span>
           </div>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="text-xs uppercase text-navy/40"><tr><th className="pb-3 font-medium">Company</th><th className="pb-3 font-medium">CR No.</th><th className="pb-3 font-medium">City</th><th className="pb-3 text-right font-medium">Action</th></tr></thead>
               <tbody className="divide-y divide-navy/10">
                 {pendingCompanies.map((c) => (

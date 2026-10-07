@@ -41,7 +41,7 @@ export default async function FinancePage() {
         <div className="card p-6 lg:col-span-2">
           <h2 className="font-semibold text-navy">Client Invoices</h2>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="text-xs uppercase text-navy/40"><tr><th className="pb-2 font-medium">Client</th><th className="pb-2 font-medium">Amount</th><th className="pb-2 font-medium">Status</th><th className="pb-2 text-right font-medium">Action</th></tr></thead>
               <tbody className="divide-y divide-navy/10">
                 {invoices.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-navy/40">No invoices yet.</td></tr>}
@@ -70,7 +70,7 @@ export default async function FinancePage() {
       <div className="card p-6">
         <h2 className="font-semibold text-navy">OEP Commissions</h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="text-xs uppercase text-navy/40"><tr><th className="pb-2 font-medium">Partner</th><th className="pb-2 font-medium">Gross</th><th className="pb-2 font-medium">OEP Share</th><th className="pb-2 font-medium">Status</th><th className="pb-2 text-right font-medium">Action</th></tr></thead>
             <tbody className="divide-y divide-navy/10">
               {commissions.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-navy/40">No commissions yet — deploy a candidate to generate one.</td></tr>}

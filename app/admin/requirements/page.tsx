@@ -30,8 +30,8 @@ export default async function AdminRequirements() {
         <button className="btn-primary sm:col-span-3 lg:col-span-6"><Icon name="doc" className="h-4 w-4" /> Create Requirement</button>
       </form>
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Requirement</th><th className="px-5 py-3 font-medium">Client</th><th className="px-5 py-3 font-medium">Qty</th><th className="px-5 py-3 font-medium">Applicants</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {reqs.map((r) => (

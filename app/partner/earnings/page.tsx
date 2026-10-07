@@ -36,8 +36,8 @@ export default async function PartnerEarnings() {
         ))}
       </div>
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Candidate</th><th className="px-5 py-3 font-medium">Requirement</th><th className="px-5 py-3 font-medium">Gross</th><th className="px-5 py-3 font-medium">Your share</th><th className="px-5 py-3 font-medium">Status</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {rows.length === 0 && <tr><td colSpan={5} className="px-5 py-10 text-center text-navy/40">No commissions yet — they appear when your candidates are deployed.</td></tr>}

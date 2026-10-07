@@ -12,8 +12,8 @@ export default async function AdminOeps() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-navy">Recruitment Partners</h1><p className="text-sm text-navy/60">{oeps.length} partner agencies in the network.</p></div>
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Partner</th><th className="px-5 py-3 font-medium">Tier</th><th className="px-5 py-3 font-medium">Rating</th><th className="px-5 py-3 font-medium">Submissions</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {oeps.map((o) => (
