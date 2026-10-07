@@ -54,14 +54,14 @@ export const activity = [
 ] as const;
 
 export const navItems = [
-  { label: "Command Center", icon: "gear", href: "/admin", active: true },
+  { label: "Command Center", icon: "wheel", href: "/admin" },
   { label: "Companies", icon: "building", href: "/admin/companies" },
   { label: "Partners", icon: "handshake", href: "/admin/oeps" },
   { label: "Candidates", icon: "users", href: "/admin/candidates" },
-  { label: "Requirements", icon: "doc", href: "/admin/requirements" },
-  { label: "CRM", icon: "users", href: "/admin/crm" },
+  { label: "Requirements", icon: "briefcase", href: "/admin/requirements" },
+  { label: "CRM", icon: "chat", href: "/admin/crm" },
   { label: "Replacements", icon: "shield", href: "/admin/replacements" },
-  { label: "Documents", icon: "shield", href: "/admin/documents" },
+  { label: "Documents", icon: "doc", href: "/admin/documents" },
   { label: "Finance", icon: "award", href: "/admin/finance" },
   { label: "Reports", icon: "star", href: "/admin/reports" },
   { label: "AI Assistant", icon: "bolt", href: "/admin/ai" },
