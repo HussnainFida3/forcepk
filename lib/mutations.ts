@@ -10,6 +10,7 @@ import { currentUser, nextRefCode } from "@/lib/session";
 import { sendEmail, sendWhatsApp, sendSMS } from "@/lib/integrations/channels";
 import { aiMatchScore, assistantAnswer } from "@/lib/integrations/ai";
 import { createMeeting, createCheckout } from "@/lib/integrations/services";
+import { uploadMedia } from "@/lib/integrations/media";
 import type { Stage, DocType, DocStatus } from "@prisma/client";
 
 const STAGE_ORDER: Stage[] = ["SUBMITTED", "UNDER_REVIEW", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "DOCUMENTATION", "PROCESSING", "READY", "DEPARTURE", "DEPLOYED"];
@@ -549,6 +550,22 @@ export async function updateCompanyProfile(formData: FormData) {
     data: { name: g("name") || undefined, industry: g("industry") || undefined, city: g("city") || undefined, website: g("website") || undefined, about: g("about") || undefined, contactName: g("contactName") || undefined, phone: g("phone") || undefined },
   });
   await log("company.profile.update", "Company", u.companyId);
+  revalidatePath("/employer/profile");
+  redirect("/employer/profile?saved=1");
+}
+
+// ── Company logo upload (Cloudinary when configured, else local disk) ──
+export async function uploadCompanyLogo(formData: FormData) {
+  const u = await currentUser();
+  if (!u?.companyId) throw new Error("No company");
+  const file = formData.get("logo") as File | null;
+  if (!file || file.size === 0) redirect("/employer/profile");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await uploadMedia(buffer, `company/${u.companyId}`, file.name);
+  if (result.ok) {
+    await prisma.company.update({ where: { id: u.companyId }, data: { logoUrl: result.url } });
+    await log("company.logo", "Company", u.companyId);
+  }
   revalidatePath("/employer/profile");
   redirect("/employer/profile?saved=1");
 }
