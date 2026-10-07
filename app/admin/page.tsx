@@ -1,6 +1,7 @@
 import Icon from "@/components/Icon";
 import StatCard from "@/components/ui/StatCard";
-import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge, Heatmap, CHART_COLORS } from "@/components/ui/charts";
+import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge, Heatmap } from "@/components/ui/charts";
+import { CHART_COLORS } from "@/components/ui/chart-colors";
 import { toneMap } from "@/lib/admin";
 import { getCommandCenter, getAdminStats, getUrgentActions } from "@/lib/queries";
 import { setCompanyStatus } from "@/lib/mutations";

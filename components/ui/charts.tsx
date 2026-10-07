@@ -21,11 +21,8 @@ import {
   LabelList,
 } from "recharts";
 
-const BRAND = "#16A34A";
-const BRAND_LIGHT = "#22c55e";
-const NAVY = "#0C2340";
-
-export const CHART_COLORS = [BRAND, NAVY, "#3b82f6", "#f59e0b", "#8b5cf6", "#14b8a6", "#ef4444", BRAND_LIGHT];
+import { BRAND, NAVY, CHART_COLORS } from "./chart-colors";
+export { CHART_COLORS };
 
 const tooltipStyle = {
   contentStyle: { borderRadius: 12, border: "1px solid rgba(12,35,64,0.1)", fontSize: 12, boxShadow: "0 4px 16px rgba(12,35,64,0.08)" },

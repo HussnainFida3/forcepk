@@ -1,6 +1,7 @@
 import Icon from "@/components/Icon";
 import StatCard from "@/components/ui/StatCard";
-import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge, CHART_COLORS } from "@/components/ui/charts";
+import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge } from "@/components/ui/charts";
+import { CHART_COLORS } from "@/components/ui/chart-colors";
 import { getCommandCenter } from "@/lib/queries";
 
 export const metadata = { title: "Reports & Analytics" };
