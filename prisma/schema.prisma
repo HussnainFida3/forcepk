@@ -1,0 +1,454 @@
+// ForcePK — Recruitment ecosystem schema
+// Datasource: PostgreSQL (see .env -> DATABASE_URL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  OPS_MANAGER
+  EMPLOYER_ADMIN
+  EMPLOYER_HR
+  OEP_ADMIN
+  OEP_RECRUITER
+  CANDIDATE
+  FINANCE
+  DOCUMENT_OFFICER
+  INTERVIEW_MANAGER
+}
+
+enum AccountStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+enum RequirementStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  OPEN
+  SHORTLISTING
+  INTERVIEWING
+  FULFILLED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// Master recruitment pipeline stages
+enum Stage {
+  SUBMITTED
+  UNDER_REVIEW
+  SCREENING
+  SHORTLISTED
+  INTERVIEW
+  SELECTED
+  DOCUMENTATION
+  PROCESSING
+  READY
+  DEPARTURE
+  DEPLOYED
+  REJECTED
+}
+
+enum DocType {
+  CV
+  PASSPORT
+  CNIC
+  PHOTO
+  EXPERIENCE_CERT
+  EDUCATION_CERT
+  MEDICAL
+  CERTIFICATION
+  OTHER
+}
+
+enum DocStatus {
+  VERIFIED
+  PENDING
+  MISSING
+  EXPIRED
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAYABLE
+  PAID
+}
+
+enum Provisioning {
+  PROVIDED
+  NOT_PROVIDED
+  ALLOWANCE
+}
+
+// ─── Identity & Auth ────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  email        String?    @unique
+  phone        String?    @unique
+  passwordHash String
+  name         String
+  role         Role       @default(CANDIDATE)
+  status       AccountStatus @default(PENDING)
+  twoFactor    Boolean    @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  company      Company?         @relation(fields: [companyId], references: [id])
+  companyId    String?
+  oep          Oep?             @relation(fields: [oepId], references: [id])
+  oepId        String?
+  candidate    CandidateProfile?
+
+  sessions     UserSession[]
+  auditLogs    AuditLog[]
+  notifications Notification[]
+  messagesSent     Message[] @relation("sent")
+  messagesReceived Message[] @relation("received")
+  leads        Lead[]
+  resetTokens  PasswordResetToken[]
+
+  @@index([role])
+  @@index([status])
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  device    String?
+  ip        String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+// ─── Saudi Employer ─────────────────────────────────────────────────
+
+model Company {
+  id          String        @id @default(cuid())
+  name        String
+  crNumber    String        @unique
+  contactName String?
+  email       String?
+  phone       String?
+  city        String?
+  industry    String?
+  website     String?
+  logoUrl     String?
+  about       String?
+  status      AccountStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+
+  users        User[]
+  requirements Requirement[]
+  invoices     Invoice[]
+  replacements ReplacementCase[]
+
+  @@index([status])
+}
+
+// ─── OEP / Recruitment Partner ──────────────────────────────────────
+
+model Oep {
+  id            String        @id @default(cuid())
+  name          String
+  licenseNo     String        @unique
+  licenseExpiry DateTime?
+  city          String?
+  phone         String?
+  email         String?
+  specializations String[]
+  status        AccountStatus @default(PENDING)
+  rating        Float         @default(0)
+  tier          String        @default("Bronze")
+  createdAt     DateTime      @default(now())
+
+  users        User[]
+  applications Application[]
+  commissions  Commission[]
+
+  @@index([status])
+}
+
+// ─── Candidate ──────────────────────────────────────────────────────
+
+model CandidateProfile {
+  id             String   @id @default(cuid())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String   @unique
+  cnic           String?  @unique
+  passportNo     String?  @unique
+  city           String?
+  profession     String?
+  skills         String[]
+  experienceYrs  Int      @default(0)
+  saudiExpYrs    Int      @default(0)
+  education      String?
+  salaryExpect   String?
+  languages      String[]
+  drivingLicense String?
+  certifications String[]
+  summary        String?
+  profileStrength Int     @default(0)
+  createdAt      DateTime @default(now())
+
+  applications Application[]
+  documents    Document[]
+
+  @@index([profession])
+}
+
+// ─── Requirements (job orders) ──────────────────────────────────────
+
+model Requirement {
+  id               String            @id @default(cuid())
+  refCode          String            @unique
+  company          Company           @relation(fields: [companyId], references: [id])
+  companyId        String
+  title            String
+  profession       String
+  quantity         Int
+  gender           String?
+  ageMin           Int?
+  ageMax           Int?
+  experience       String?
+  education        String?
+  skills           String[]
+  salary           String?
+  accommodation    Provisioning      @default(NOT_PROVIDED)
+  food             Provisioning      @default(NOT_PROVIDED)
+  transport        Provisioning      @default(NOT_PROVIDED)
+  workingHours     String?
+  contractDuration String?
+  overtime         String?
+  location         String
+  joiningDeadline  DateTime?
+  interviewMethod  String?
+  specialNotes     String?
+  status           RequirementStatus @default(DRAFT)
+  priority         Priority          @default(NORMAL)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  applications Application[]
+
+  @@index([status])
+  @@index([profession])
+}
+
+// ─── Applications / Candidate submissions ───────────────────────────
+
+model Application {
+  id            String      @id @default(cuid())
+  requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  requirementId String
+  candidate     CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId   String
+  oep           Oep?        @relation(fields: [oepId], references: [id])
+  oepId         String?
+  stage         Stage       @default(SUBMITTED)
+  aiMatch       Int?
+  skillsMatch   Int?
+  expMatch      Int?
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  interviews  Interview[]
+  commission  Commission?
+  replacement ReplacementCase?
+
+  @@unique([requirementId, candidateId])
+  @@index([stage])
+}
+
+model Interview {
+  id            String          @id @default(cuid())
+  application   Application     @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  scheduledAt   DateTime?
+  method        String?
+  link          String?
+  status        InterviewStatus @default(SCHEDULED)
+  score         Int?
+  feedback      String?
+  createdAt     DateTime        @default(now())
+}
+
+// ─── Documents ──────────────────────────────────────────────────────
+
+model Document {
+  id          String    @id @default(cuid())
+  candidate   CandidateProfile @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+  type        DocType
+  fileUrl     String?
+  status      DocStatus @default(MISSING)
+  expiryDate  DateTime?
+  uploadedAt  DateTime  @default(now())
+
+  @@index([status])
+}
+
+// ─── Finance ────────────────────────────────────────────────────────
+
+model Invoice {
+  id         String   @id @default(cuid())
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String
+  amount     Decimal  @db.Decimal(12, 2)
+  currency   String   @default("SAR")
+  status     String   @default("PENDING")
+  issuedAt   DateTime @default(now())
+  dueAt      DateTime?
+}
+
+model Commission {
+  id            String           @id @default(cuid())
+  oep           Oep              @relation(fields: [oepId], references: [id])
+  oepId         String
+  application   Application      @relation(fields: [applicationId], references: [id])
+  applicationId String           @unique
+  grossFee      Decimal          @db.Decimal(12, 2)
+  oepShare      Decimal          @db.Decimal(12, 2)
+  currency      String           @default("SAR")
+  status        CommissionStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+}
+
+// ─── Platform ───────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+}
+
+// ─── Internal messaging ─────────────────────────────────────────────
+
+model Message {
+  id          String   @id @default(cuid())
+  sender      User     @relation("sent", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    String
+  recipient   User     @relation("received", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientId String
+  body        String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([senderId, recipientId])
+  @@index([recipientId, read])
+}
+
+// ─── CRM ────────────────────────────────────────────────────────────
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  MEETING
+  PROPOSAL
+  AGREEMENT
+  WON
+  LOST
+}
+
+model Lead {
+  id        String    @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  source    String?
+  stage     LeadStage @default(NEW)
+  notes     String?
+  owner     User?     @relation(fields: [ownerId], references: [id])
+  ownerId   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([stage])
+}
+
+// ─── Replacement / guarantee ────────────────────────────────────────
+
+enum ReplacementStatus {
+  REPORTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SEARCHING
+  SELECTED
+  CLOSED
+}
+
+model ReplacementCase {
+  id            String            @id @default(cuid())
+  caseNo        String            @unique
+  application   Application       @relation(fields: [applicationId], references: [id])
+  applicationId String            @unique
+  company       Company           @relation(fields: [companyId], references: [id])
+  companyId     String
+  reason        String
+  status        ReplacementStatus @default(REPORTED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([status])
+}

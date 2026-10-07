@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.pgdata
+storage
+scripts/*.log
+npm-debug.log
+.env
+.env.local
+README.md
+DEPLOYMENT.md
