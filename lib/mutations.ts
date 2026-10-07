@@ -340,6 +340,55 @@ export async function markNotificationsRead() {
   revalidatePath("/notifications");
 }
 
+// ── Email verification ──
+import { randomBytes } from "node:crypto";
+
+const appUrl = () => process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? "https://forcepk.com";
+
+// Create a token and email a verification link. No-throw; email send is a stub
+// until RESEND_API_KEY is configured.
+export async function sendVerificationEmail(userId: string, email: string, name?: string) {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+  await prisma.emailVerificationToken.create({ data: { token, userId, expiresAt } });
+  const link = `${appUrl()}/verify?token=${token}`;
+  await sendEmail(
+    email,
+    "Verify your ForcePK email",
+    `<div style="font-family:sans-serif"><h2>Welcome to ForcePK${name ? `, ${name}` : ""}!</h2>
+     <p>Please confirm your email address to activate your account.</p>
+     <p><a href="${link}" style="display:inline-block;background:#16A34A;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Verify email</a></p>
+     <p style="color:#64748b;font-size:13px">Or paste this link: ${link}<br/>This link expires in 24 hours.</p></div>`,
+  );
+  return token;
+}
+
+// Verify a token (called by /verify page). Returns a status string.
+export async function verifyEmailToken(token: string): Promise<"ok" | "invalid" | "expired" | "used"> {
+  const row = await prisma.emailVerificationToken.findUnique({ where: { token } });
+  if (!row) return "invalid";
+  if (row.usedAt) return "used";
+  if (row.expiresAt < new Date()) return "expired";
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { emailVerified: new Date() } }),
+    prisma.emailVerificationToken.update({ where: { id: row.id }, data: { usedAt: new Date() } }),
+  ]);
+  await log("email.verified", "User", row.userId);
+  return "ok";
+}
+
+// Resend a verification email for the given address (used by the "resend" button).
+export async function resendVerification(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const returnTo = String(formData.get("returnTo") ?? "/login");
+  if (email) {
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true, emailVerified: true } });
+    if (user?.email && !user.emailVerified) await sendVerificationEmail(user.id, user.email, user.name);
+  }
+  // Always report success (don't leak whether an address exists).
+  redirect(`${returnTo}?verifySent=1`);
+}
+
 // ── Self-registration ──
 export async function registerAccount(kind: "employer" | "oep" | "candidate", formData: FormData) {
   const g = (k: string) => String(formData.get(k) ?? "").trim();
@@ -349,21 +398,26 @@ export async function registerAccount(kind: "employer" | "oep" | "candidate", fo
     redirect("/login?exists=1");
   }
 
+  let newUserId: string | null = null;
   if (kind === "employer") {
     const company = await prisma.company.create({
       data: { name: g("company"), crNumber: g("crNumber") || `CR-${Date.now()}`, city: g("city"), industry: g("industry"), email, status: "PENDING" },
     });
-    await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "EMPLOYER_ADMIN", passwordHash: hash, status: "PENDING", companyId: company.id } });
+    const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "EMPLOYER_ADMIN", passwordHash: hash, status: "PENDING", companyId: company.id } });
+    newUserId = user.id;
   } else if (kind === "oep") {
     const oep = await prisma.oep.create({
       data: { name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), email, status: "PENDING" },
     });
-    await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "OEP_ADMIN", passwordHash: hash, status: "PENDING", oepId: oep.id } });
+    const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "OEP_ADMIN", passwordHash: hash, status: "PENDING", oepId: oep.id } });
+    newUserId = user.id;
   } else {
     const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "CANDIDATE", passwordHash: hash, status: "VERIFIED" } });
     await prisma.candidateProfile.create({ data: { userId: user.id, profession: g("profession"), city: g("city"), skills: [], profileStrength: 40 } });
+    newUserId = user.id;
   }
   await log("account.register", "User", email);
+  if (newUserId && email) await sendVerificationEmail(newUserId, email, g("name"));
   redirect("/login?registered=1");
 }
 
