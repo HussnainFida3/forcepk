@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
 import { setOepStatus } from "@/lib/mutations";
@@ -24,8 +25,11 @@ export default async function AdminOeps() {
                 <td className="px-5 py-3 text-navy/70">{o._count.applications}</td>
                 <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone[o.status]}`}>{o.status}</span></td>
                 <td className="px-5 py-3"><div className="flex justify-end gap-2">
+                  <Link href={`/admin/oeps/${o.id}`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy/70 hover:border-brand hover:text-brand">View</Link>
                   {o.status !== "VERIFIED" && <form action={setOepStatus.bind(null, o.id, "VERIFIED")}><button className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">Verify</button></form>}
-                  {o.status !== "SUSPENDED" && <form action={setOepStatus.bind(null, o.id, "SUSPENDED")}><button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Suspend</button></form>}
+                  {o.status === "SUSPENDED"
+                    ? <form action={setOepStatus.bind(null, o.id, "VERIFIED")}><button className="rounded-md border border-brand/30 px-3 py-1.5 text-xs font-semibold text-brand-dark hover:bg-brand/5">Reactivate</button></form>
+                    : <form action={setOepStatus.bind(null, o.id, "SUSPENDED")}><button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Suspend</button></form>}
                 </div></td>
               </tr>
             ))}

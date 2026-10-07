@@ -1,91 +1,102 @@
-// Lightweight, dependency-free charts (Tremor/Recharts-style) as inline SVG.
-// Theme-aware via the brand palette; crisp in any size.
+"use client";
+
+// Responsive charts built on Recharts. Every chart fills its container via
+// <ResponsiveContainer>, so cards never overflow on small screens.
+import {
+  ResponsiveContainer,
+  AreaChart as RAreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart as RBarChart,
+  Bar,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
+  LabelList,
+} from "recharts";
 
 const BRAND = "#16A34A";
 const BRAND_LIGHT = "#22c55e";
 const NAVY = "#0C2340";
 
+export const CHART_COLORS = [BRAND, NAVY, "#3b82f6", "#f59e0b", "#8b5cf6", "#14b8a6", "#ef4444", BRAND_LIGHT];
+
+const tooltipStyle = {
+  contentStyle: { borderRadius: 12, border: "1px solid rgba(12,35,64,0.1)", fontSize: 12, boxShadow: "0 4px 16px rgba(12,35,64,0.08)" },
+  labelStyle: { color: NAVY, fontWeight: 600 },
+};
+
+// ── Sparkline (inside StatCard) ──
 export function Sparkline({ data, color = BRAND, className = "h-8 w-24" }: { data: number[]; color?: string; className?: string }) {
-  if (data.length < 2) return <svg className={className} />;
-  const w = 100, h = 32, max = Math.max(...data), min = Math.min(...data);
-  const rng = max - min || 1;
-  const pts = data.map((d, i) => [(i / (data.length - 1)) * w, h - ((d - min) / rng) * (h - 4) - 2]);
-  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-  const area = `${line} L${w},${h} L0,${h} Z`;
+  if (!data || data.length < 2) return <div className={className} />;
+  const rows = data.map((v, i) => ({ i, v }));
   const id = `sp${color.replace("#", "")}`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className={className}>
-      <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.25" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
-      <path d={area} fill={`url(#${id})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
-export function AreaChart({ data, labels, height = 220 }: { data: number[]; labels: string[]; height?: number }) {
-  if (!data || data.length < 2) {
-    return <div className="grid place-items-center text-sm text-navy/35" style={{ height }}>Not enough data yet</div>;
-  }
-  const w = 600, h = height, pad = 28;
-  const max = Math.max(1, ...data), min = 0, rng = max - min || 1;
-  const x = (i: number) => pad + (i / Math.max(1, data.length - 1)) * (w - pad * 2);
-  const y = (v: number) => h - pad - ((v - min) / rng) * (h - pad * 2);
-  const line = data.map((d, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(d).toFixed(1)}`).join(" ");
-  const area = `${line} L${x(data.length - 1)},${h - pad} L${x(0)},${h - pad} Z`;
-  const ticks = [0, 0.5, 1].map((t) => min + t * rng);
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height }}>
-      <defs><linearGradient id="areaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={BRAND} stopOpacity="0.28" /><stop offset="100%" stopColor={BRAND} stopOpacity="0" /></linearGradient></defs>
-      {ticks.map((t, i) => (
-        <g key={i}>
-          <line x1={pad} x2={w - pad} y1={y(t)} y2={y(t)} stroke={NAVY} strokeOpacity="0.08" />
-          <text x={4} y={y(t) + 4} fontSize="10" fill={NAVY} fillOpacity="0.4">{Math.round(t)}</text>
-        </g>
-      ))}
-      <path d={area} fill="url(#areaG)" />
-      <path d={line} fill="none" stroke={BRAND} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      {data.map((d, i) => <circle key={i} cx={x(i)} cy={y(d)} r="2.5" fill={BRAND} />)}
-      {labels.map((l, i) => (i % Math.ceil(labels.length / 7) === 0) && (
-        <text key={i} x={x(i)} y={h - 8} fontSize="9" fill={NAVY} fillOpacity="0.45" textAnchor="middle">{l}</text>
-      ))}
-    </svg>
-  );
-}
-
-export function BarChart({ items }: { items: { label: string; value: number }[] }) {
-  const max = Math.max(1, ...items.map((i) => i.value));
-  return (
-    <div className="space-y-3">
-      {items.map((i) => (
-        <div key={i.label} className="flex items-center gap-3">
-          <span className="w-28 shrink-0 truncate text-xs text-navy/60">{i.label}</span>
-          <div className="h-5 flex-1 overflow-hidden rounded-md bg-navy/5">
-            <div className="flex h-full items-center justify-end rounded-md bg-gradient-to-r from-brand to-brand-dark px-2" style={{ width: `${Math.max(8, (i.value / max) * 100)}%` }}>
-              <span className="text-[10px] font-bold text-white">{i.value}</span>
-            </div>
-          </div>
-        </div>
-      ))}
+    <div className={className}>
+      <ResponsiveContainer width="100%" height="100%">
+        <RAreaChart data={rows} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={2} fill={`url(#${id})`} isAnimationActive={false} dot={false} />
+        </RAreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
 
-export function Donut({ segments, size = 160 }: { segments: { label: string; value: number; color: string }[]; size?: number }) {
-  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
-  const r = size / 2 - 14, cx = size / 2, cy = size / 2, C = 2 * Math.PI * r;
-  let offset = 0;
+// ── Area chart (trend lines) ──
+export function AreaChart({ data, labels, height = 220 }: { data: number[]; labels: string[]; height?: number }) {
+  if (!data || data.length < 2) {
+    return <div className="grid place-items-center text-sm text-navy/35" style={{ height }}>Not enough data yet</div>;
+  }
+  const rows = data.map((v, i) => ({ label: labels[i] ?? String(i), value: v }));
   return (
-    <div className="flex flex-wrap items-center justify-center gap-5">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="h-auto max-w-full shrink-0 -rotate-90" style={{ maxWidth: size }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={NAVY} strokeOpacity="0.07" strokeWidth="14" />
-        {segments.map((s) => {
-          const len = (s.value / total) * C;
-          const el = <circle key={s.label} cx={cx} cy={cy} r={r} fill="none" stroke={s.color} strokeWidth="14" strokeDasharray={`${len} ${C - len}`} strokeDashoffset={-offset} strokeLinecap="butt" />;
-          offset += len;
-          return el;
-        })}
-        <text x={cx} y={cy} transform={`rotate(90 ${cx} ${cy})`} textAnchor="middle" dominantBaseline="central" fontSize="22" fontWeight="800" fill={NAVY}>{total}</text>
-      </svg>
+    <ResponsiveContainer width="100%" height={height}>
+      <RAreaChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+        <defs>
+          <linearGradient id="areaG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={BRAND} stopOpacity={0.28} />
+            <stop offset="100%" stopColor={BRAND} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke={NAVY} strokeOpacity={0.08} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.45 }} tickLine={false} axisLine={false} minTickGap={16} />
+        <YAxis tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.4 }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
+        <Tooltip {...tooltipStyle} />
+        <Area type="monotone" dataKey="value" name="Applications" stroke={BRAND} strokeWidth={2.5} fill="url(#areaG)" dot={false} activeDot={{ r: 4 }} />
+      </RAreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ── Donut (distribution) ──
+export function Donut({ segments, size = 160 }: { segments: { label: string; value: number; color: string }[]; size?: number }) {
+  const total = segments.reduce((s, x) => s + x.value, 0);
+  return (
+    <div className="flex w-full flex-wrap items-center justify-center gap-5">
+      <div className="relative shrink-0" style={{ width: size, height: size, maxWidth: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie data={segments} dataKey="value" nameKey="label" cx="50%" cy="50%" innerRadius="62%" outerRadius="100%" paddingAngle={segments.length > 1 ? 2 : 0} stroke="none">
+              {segments.map((s) => <Cell key={s.label} fill={s.color} />)}
+            </Pie>
+            <Tooltip {...tooltipStyle} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <span className="text-2xl font-extrabold text-navy">{total}</span>
+        </div>
+      </div>
       <ul className="min-w-0 space-y-1.5 text-sm">
         {segments.map((s) => (
           <li key={s.label} className="flex items-center gap-2">
@@ -99,42 +110,62 @@ export function Donut({ segments, size = 160 }: { segments: { label: string; val
   );
 }
 
+// ── Horizontal bar list (top professions / locations) ──
+export function BarChart({ items }: { items: { label: string; value: number }[] }) {
+  if (!items || items.length === 0) return <div className="py-6 text-center text-sm text-navy/35">No data yet</div>;
+  const height = Math.max(120, items.length * 42);
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RBarChart data={items} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }} barCategoryGap={10}>
+        <XAxis type="number" hide />
+        <YAxis type="category" dataKey="label" width={104} tick={{ fontSize: 11, fill: NAVY, fillOpacity: 0.6 }} tickLine={false} axisLine={false} />
+        <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(12,35,64,0.04)" }} />
+        <Bar dataKey="value" fill={BRAND} radius={[4, 4, 4, 4]} maxBarSize={22}>
+          <LabelList dataKey="value" position="right" style={{ fontSize: 11, fontWeight: 700, fill: NAVY }} />
+        </Bar>
+      </RBarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ── Radial gauge (conversion rates) ──
 export function RadialGauge({ value, label, size = 120, color = BRAND }: { value: number; label: string; size?: number; color?: string }) {
-  const r = size / 2 - 10, cx = size / 2, cy = size / 2, C = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(100, value));
-  const id = `g${label.replace(/\W/g, "")}`;
   return (
     <div className="flex flex-col items-center">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <defs><linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={color} /><stop offset="100%" stopColor={BRAND_LIGHT} /></linearGradient></defs>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={NAVY} strokeOpacity="0.08" strokeWidth="10" />
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={`url(#${id})`} strokeWidth="10" strokeLinecap="round"
-          strokeDasharray={C} strokeDashoffset={C - (pct / 100) * C} />
-        <text x={cx} y={cy} transform={`rotate(90 ${cx} ${cy})`} textAnchor="middle" dominantBaseline="central" fontSize="20" fontWeight="800" fill={NAVY}>{Math.round(pct)}%</text>
-      </svg>
-      <span className="mt-1 text-xs font-medium text-navy/60">{label}</span>
-    </div>
-  );
-}
-
-// Grouped vertical bars (e.g. monthly deployments).
-export function ColumnChart({ items, height = 180 }: { items: { label: string; value: number }[]; height?: number }) {
-  const max = Math.max(1, ...items.map((i) => i.value));
-  return (
-    <div className="flex items-end gap-2" style={{ height }}>
-      {items.map((i) => (
-        <div key={i.label} className="flex flex-1 flex-col items-center gap-1.5">
-          <div className="flex w-full flex-1 items-end">
-            <div className="w-full rounded-t-md bg-gradient-to-t from-navy to-brand transition-all" style={{ height: `${(i.value / max) * 100}%`, minHeight: 4 }} title={`${i.value}`} />
-          </div>
-          <span className="text-[10px] font-medium text-navy/50">{i.label}</span>
+      <div className="relative" style={{ width: size, height: size, maxWidth: "100%" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart innerRadius="72%" outerRadius="100%" data={[{ value: pct }]} startAngle={90} endAngle={-270}>
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+            <RadialBar background={{ fill: "rgba(12,35,64,0.08)" }} dataKey="value" cornerRadius={20} fill={color} />
+          </RadialBarChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <span className="text-lg font-extrabold text-navy">{Math.round(pct)}%</span>
         </div>
-      ))}
+      </div>
+      <span className="mt-1 text-center text-xs font-medium text-navy/60">{label}</span>
     </div>
   );
 }
 
-// GitHub-style activity heatmap (last N weeks).
+// ── Vertical columns (monthly deployments) ──
+export function ColumnChart({ items, height = 180 }: { items: { label: string; value: number }[]; height?: number }) {
+  if (!items || items.length === 0) return <div className="py-6 text-center text-sm text-navy/35">No data yet</div>;
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <RBarChart data={items} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={NAVY} strokeOpacity={0.08} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.5 }} tickLine={false} axisLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.4 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
+        <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(12,35,64,0.04)" }} />
+        <Bar dataKey="value" fill={BRAND} radius={[6, 6, 0, 0]} maxBarSize={44} />
+      </RBarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ── GitHub-style activity heatmap (no Recharts equivalent — kept as a grid) ──
 export function Heatmap({ days }: { days: { date: string; count: number }[] }) {
   const max = Math.max(1, ...days.map((d) => d.count));
   const level = (c: number) => (c === 0 ? 0 : Math.ceil((c / max) * 4));
@@ -151,5 +182,3 @@ export function Heatmap({ days }: { days: { date: string; count: number }[] }) {
     </div>
   );
 }
-
-export const CHART_COLORS = [BRAND, NAVY, "#3b82f6", "#f59e0b", "#8b5cf6", "#14b8a6", "#ef4444", BRAND_LIGHT];

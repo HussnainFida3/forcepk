@@ -10,6 +10,7 @@ import { currentUser, nextRefCode } from "@/lib/session";
 import { sendEmail, sendWhatsApp, sendSMS } from "@/lib/integrations/channels";
 import { aiMatchScore, assistantAnswer } from "@/lib/integrations/ai";
 import { createMeeting, createCheckout } from "@/lib/integrations/services";
+import { uploadMedia } from "@/lib/integrations/media";
 import type { Stage, DocType, DocStatus } from "@prisma/client";
 
 const STAGE_ORDER: Stage[] = ["SUBMITTED", "UNDER_REVIEW", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "DOCUMENTATION", "PROCESSING", "READY", "DEPARTURE", "DEPLOYED"];
@@ -194,11 +195,51 @@ export async function rejectApplication(applicationId: string) {
 }
 
 // ── Admin: verify / suspend a company ──
-export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED") {
+export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED" | "PENDING") {
   await prisma.company.update({ where: { id: companyId }, data: { status } });
   await log("company.status", "Company", companyId);
   await notifyCompanyUsers(companyId, `Your company was ${status.toLowerCase()}`, "Admin updated your verification status.");
   revalidatePath("/admin");
+  revalidatePath("/admin/companies");
+  revalidatePath(`/admin/companies/${companyId}`);
+}
+
+// ── Admin: edit a company's profile ──
+export async function updateCompany(companyId: string, formData: FormData) {
+  const g = (k: string) => { const v = String(formData.get(k) ?? "").trim(); return v || null; };
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      name: g("name") ?? undefined,
+      contactName: g("contactName"),
+      email: g("email"),
+      phone: g("phone"),
+      city: g("city"),
+      industry: g("industry"),
+      website: g("website"),
+      about: g("about"),
+    },
+  });
+  await log("company.update", "Company", companyId);
+  revalidatePath("/admin/companies");
+  revalidatePath(`/admin/companies/${companyId}`);
+  redirect(`/admin/companies/${companyId}?saved=1`);
+}
+
+// ── Admin: permanently delete a company (and its dependent records) ──
+export async function deleteCompany(companyId: string) {
+  // Remove dependent rows first to satisfy FK constraints, then the company.
+  await prisma.$transaction([
+    prisma.application.deleteMany({ where: { requirement: { companyId } } }),
+    prisma.requirement.deleteMany({ where: { companyId } }),
+    prisma.invoice.deleteMany({ where: { companyId } }),
+    prisma.replacementCase.deleteMany({ where: { companyId } }),
+    prisma.company.delete({ where: { id: companyId } }),
+  ]);
+  await log("company.delete", "Company", companyId);
+  revalidatePath("/admin/companies");
+  revalidatePath("/admin");
+  redirect("/admin/companies?deleted=1");
 }
 
 export async function setOepStatus(oepId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED") {
@@ -300,6 +341,55 @@ export async function markNotificationsRead() {
   revalidatePath("/notifications");
 }
 
+// ── Email verification ──
+import { randomBytes } from "node:crypto";
+
+const appUrl = () => process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? "https://forcepk.com";
+
+// Create a token and email a verification link. No-throw; email send is a stub
+// until RESEND_API_KEY is configured.
+export async function sendVerificationEmail(userId: string, email: string, name?: string) {
+  const token = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24h
+  await prisma.emailVerificationToken.create({ data: { token, userId, expiresAt } });
+  const link = `${appUrl()}/verify?token=${token}`;
+  await sendEmail(
+    email,
+    "Verify your ForcePK email",
+    `<div style="font-family:sans-serif"><h2>Welcome to ForcePK${name ? `, ${name}` : ""}!</h2>
+     <p>Please confirm your email address to activate your account.</p>
+     <p><a href="${link}" style="display:inline-block;background:#16A34A;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Verify email</a></p>
+     <p style="color:#64748b;font-size:13px">Or paste this link: ${link}<br/>This link expires in 24 hours.</p></div>`,
+  );
+  return token;
+}
+
+// Verify a token (called by /verify page). Returns a status string.
+export async function verifyEmailToken(token: string): Promise<"ok" | "invalid" | "expired" | "used"> {
+  const row = await prisma.emailVerificationToken.findUnique({ where: { token } });
+  if (!row) return "invalid";
+  if (row.usedAt) return "used";
+  if (row.expiresAt < new Date()) return "expired";
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: row.userId }, data: { emailVerified: new Date() } }),
+    prisma.emailVerificationToken.update({ where: { id: row.id }, data: { usedAt: new Date() } }),
+  ]);
+  await log("email.verified", "User", row.userId);
+  return "ok";
+}
+
+// Resend a verification email for the given address (used by the "resend" button).
+export async function resendVerification(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const returnTo = String(formData.get("returnTo") ?? "/login");
+  if (email) {
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true, name: true, emailVerified: true } });
+    if (user?.email && !user.emailVerified) await sendVerificationEmail(user.id, user.email, user.name);
+  }
+  // Always report success (don't leak whether an address exists).
+  redirect(`${returnTo}?verifySent=1`);
+}
+
 // ── Self-registration ──
 export async function registerAccount(kind: "employer" | "oep" | "candidate", formData: FormData) {
   const g = (k: string) => String(formData.get(k) ?? "").trim();
@@ -309,21 +399,26 @@ export async function registerAccount(kind: "employer" | "oep" | "candidate", fo
     redirect("/login?exists=1");
   }
 
+  let newUserId: string | null = null;
   if (kind === "employer") {
     const company = await prisma.company.create({
       data: { name: g("company"), crNumber: g("crNumber") || `CR-${Date.now()}`, city: g("city"), industry: g("industry"), email, status: "PENDING" },
     });
-    await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "EMPLOYER_ADMIN", passwordHash: hash, status: "PENDING", companyId: company.id } });
+    const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "EMPLOYER_ADMIN", passwordHash: hash, status: "PENDING", companyId: company.id } });
+    newUserId = user.id;
   } else if (kind === "oep") {
     const oep = await prisma.oep.create({
       data: { name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), email, status: "PENDING" },
     });
-    await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "OEP_ADMIN", passwordHash: hash, status: "PENDING", oepId: oep.id } });
+    const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "OEP_ADMIN", passwordHash: hash, status: "PENDING", oepId: oep.id } });
+    newUserId = user.id;
   } else {
     const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "CANDIDATE", passwordHash: hash, status: "VERIFIED" } });
     await prisma.candidateProfile.create({ data: { userId: user.id, profession: g("profession"), city: g("city"), skills: [], profileStrength: 40 } });
+    newUserId = user.id;
   }
   await log("account.register", "User", email);
+  if (newUserId && email) await sendVerificationEmail(newUserId, email, g("name"));
   redirect("/login?registered=1");
 }
 
@@ -459,6 +554,22 @@ export async function updateCompanyProfile(formData: FormData) {
   redirect("/employer/profile?saved=1");
 }
 
+// ── Company logo upload (Cloudinary when configured, else local disk) ──
+export async function uploadCompanyLogo(formData: FormData) {
+  const u = await currentUser();
+  if (!u?.companyId) throw new Error("No company");
+  const file = formData.get("logo") as File | null;
+  if (!file || file.size === 0) redirect("/employer/profile");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await uploadMedia(buffer, `company/${u.companyId}`, file.name);
+  if (result.ok) {
+    await prisma.company.update({ where: { id: u.companyId }, data: { logoUrl: result.url } });
+    await log("company.logo", "Company", u.companyId);
+  }
+  revalidatePath("/employer/profile");
+  redirect("/employer/profile?saved=1");
+}
+
 export async function updateOepProfile(formData: FormData) {
   const u = await currentUser();
   if (!u?.oepId) throw new Error("No OEP");
@@ -478,6 +589,159 @@ export async function shortlistApplication(applicationId: string) {
   revalidatePath("/employer/candidates");
   revalidatePath("/employer");
   revalidatePath("/employer/pipeline");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Admin CRUD — Partners (OEP), Requirements, Candidates, Leads, Finance
+// ═══════════════════════════════════════════════════════════════════
+
+const str = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v || null; };
+const num = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v ? parseInt(v, 10) : null; };
+const csv = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v ? v.split(",").map((s) => s.trim()).filter(Boolean) : []; };
+
+// ── Partners (OEP) ──
+export async function updateOep(oepId: string, formData: FormData) {
+  await prisma.oep.update({
+    where: { id: oepId },
+    data: {
+      name: str(formData, "name") ?? undefined,
+      licenseNo: str(formData, "licenseNo") ?? undefined,
+      licenseExpiry: str(formData, "licenseExpiry") ? new Date(String(formData.get("licenseExpiry"))) : null,
+      city: str(formData, "city"),
+      phone: str(formData, "phone"),
+      email: str(formData, "email"),
+      tier: str(formData, "tier") ?? undefined,
+      rating: str(formData, "rating") ? Math.max(0, Math.min(5, Number(formData.get("rating")))) : undefined,
+      specializations: csv(formData, "specializations"),
+    },
+  });
+  await log("oep.update", "Oep", oepId);
+  revalidatePath("/admin/oeps");
+  revalidatePath(`/admin/oeps/${oepId}`);
+  redirect(`/admin/oeps/${oepId}?saved=1`);
+}
+
+export async function deleteOep(oepId: string) {
+  await prisma.$transaction([
+    prisma.application.updateMany({ where: { oepId }, data: { oepId: null } }),
+    prisma.user.updateMany({ where: { oepId }, data: { oepId: null } }),
+    prisma.commission.deleteMany({ where: { oepId } }),
+    prisma.oep.delete({ where: { id: oepId } }),
+  ]);
+  await log("oep.delete", "Oep", oepId);
+  revalidatePath("/admin/oeps");
+  redirect("/admin/oeps?deleted=1");
+}
+
+// ── Requirements ──
+export async function updateRequirement(requirementId: string, formData: FormData) {
+  await prisma.requirement.update({
+    where: { id: requirementId },
+    data: {
+      title: str(formData, "title") ?? undefined,
+      profession: str(formData, "profession") ?? undefined,
+      quantity: num(formData, "quantity") ?? undefined,
+      location: str(formData, "location") ?? undefined,
+      salary: str(formData, "salary"),
+      experience: str(formData, "experience"),
+      education: str(formData, "education"),
+      gender: str(formData, "gender"),
+      contractDuration: str(formData, "contractDuration"),
+      workingHours: str(formData, "workingHours"),
+      interviewMethod: str(formData, "interviewMethod"),
+      specialNotes: str(formData, "specialNotes"),
+      skills: csv(formData, "skills"),
+      priority: (str(formData, "priority") ?? "NORMAL") as never,
+      status: (str(formData, "status") ?? "OPEN") as never,
+    },
+  });
+  await log("requirement.update", "Requirement", requirementId);
+  revalidatePath("/admin/requirements");
+  revalidatePath(`/admin/requirements/${requirementId}`);
+  redirect(`/admin/requirements/${requirementId}?saved=1`);
+}
+
+export async function deleteRequirement(requirementId: string) {
+  await prisma.requirement.delete({ where: { id: requirementId } }); // applications cascade
+  await log("requirement.delete", "Requirement", requirementId);
+  revalidatePath("/admin/requirements");
+  redirect("/admin/requirements?deleted=1");
+}
+
+// ── Candidates (admin) ──
+export async function updateCandidate(candidateId: string, formData: FormData) {
+  await prisma.candidateProfile.update({
+    where: { id: candidateId },
+    data: {
+      profession: str(formData, "profession") ?? undefined,
+      city: str(formData, "city"),
+      experienceYrs: num(formData, "experienceYrs") ?? undefined,
+      saudiExpYrs: num(formData, "saudiExpYrs") ?? undefined,
+      education: str(formData, "education"),
+      salaryExpect: str(formData, "salaryExpect"),
+      summary: str(formData, "summary"),
+      skills: csv(formData, "skills"),
+      languages: csv(formData, "languages"),
+      certifications: csv(formData, "certifications"),
+    },
+  });
+  await log("candidate.admin.update", "CandidateProfile", candidateId);
+  revalidatePath("/admin/candidates");
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  redirect(`/admin/candidates/${candidateId}?saved=1`);
+}
+
+export async function deleteCandidate(candidateId: string) {
+  const profile = await prisma.candidateProfile.findUnique({ where: { id: candidateId }, select: { userId: true } });
+  await prisma.candidateProfile.delete({ where: { id: candidateId } }); // documents + applications cascade
+  if (profile) await prisma.user.delete({ where: { id: profile.userId } }).catch(() => {});
+  await log("candidate.delete", "CandidateProfile", candidateId);
+  revalidatePath("/admin/candidates");
+  redirect("/admin/candidates?deleted=1");
+}
+
+// ── CRM leads ──
+export async function updateLead(leadId: string, formData: FormData) {
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      name: str(formData, "name") ?? undefined,
+      company: str(formData, "company"),
+      email: str(formData, "email"),
+      phone: str(formData, "phone"),
+      source: str(formData, "source"),
+      notes: str(formData, "notes"),
+      stage: (str(formData, "stage") ?? "NEW") as never,
+    },
+  });
+  await log("lead.update", "Lead", leadId);
+  revalidatePath("/admin/crm");
+  redirect("/admin/crm?saved=1");
+}
+
+export async function deleteLead(leadId: string) {
+  await prisma.lead.delete({ where: { id: leadId } });
+  await log("lead.delete", "Lead", leadId);
+  revalidatePath("/admin/crm");
+}
+
+// ── Finance ──
+export async function recordInvoicePayment(invoiceId: string) {
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "PAID" } });
+  await log("invoice.paid", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
+}
+
+export async function voidInvoice(invoiceId: string) {
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "VOID" } });
+  await log("invoice.void", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+  await log("invoice.delete", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
 }
 
 // ── Online payment (Stripe when keyed) ──

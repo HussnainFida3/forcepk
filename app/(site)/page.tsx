@@ -21,53 +21,69 @@ export default function Home({ searchParams }: { searchParams: { sent?: string }
     <>
       {/* HERO */}
       <section className="relative overflow-hidden bg-navy text-white">
-        <img src={HERO.heroBg} alt="" loading="eager" className="absolute inset-0 h-full w-full scale-105 object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/70 to-navy/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-navy/20" />
-        <div className="absolute inset-0 bg-[radial-gradient(55%_60%_at_12%_25%,rgba(34,197,94,0.14),transparent)]" />
-        <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-brand/20 blur-3xl animate-blob" />
-        <div className="container-fp relative py-20 lg:py-32">
-          <div className="max-w-2xl animate-fade-up">
-            <span className="chip bg-brand/20 text-brand-light shimmer backdrop-blur">{t("hero.badge", locale)}</span>
-            <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight drop-shadow-lg sm:text-5xl lg:text-6xl">
+        <img src={HERO.heroBg} alt="" loading="eager" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy to-navy-900" />
+        <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_80%_10%,rgba(34,197,94,0.18),transparent)]" />
+        <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:44px_44px]" />
+        <div className="container-fp relative grid items-center gap-12 py-20 lg:grid-cols-2 lg:py-28">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-white/80">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand-light" /> {t("hero.badge", locale)}
+            </span>
+            <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]">
               {t("hero.title1", locale)}{" "}
-              <span className="bg-gradient-to-r from-brand-light to-brand bg-clip-text text-transparent">{t("hero.title2", locale)}</span>{t("hero.title3", locale)}
+              <span className="text-brand-light">{t("hero.title2", locale)}</span>{t("hero.title3", locale)}
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-white/85 drop-shadow">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
               {t("hero.sub", locale)}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/employers#post" className="btn-primary shadow-lg shadow-brand/30">
+              <Link href="/employers#post" className="btn-primary">
                 {t("hero.cta1", locale)} <Icon name="arrow" className="h-4 w-4" />
               </Link>
-              <Link href="/jobs" className="btn-ghost backdrop-blur">{t("hero.cta2", locale)}</Link>
+              <Link href="/jobs" className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{t("hero.cta2", locale)}</Link>
             </div>
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4">
+            <div className="mt-12 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-8">
               {stats.slice(0, 3).map((s) => {
                 const { n, suffix } = parseStat(s.value);
                 return (
                   <div key={s.label}>
-                    <div className="text-2xl font-bold text-brand-light drop-shadow"><AnimatedNumber value={n} suffix={suffix} /></div>
-                    <div className="text-xs text-white/70">{s.label}</div>
+                    <div className="text-2xl font-bold text-white sm:text-3xl"><AnimatedNumber value={n} suffix={suffix} /></div>
+                    <div className="mt-1 text-xs text-white/55">{s.label}</div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Floating chips over the photo */}
-          <div className="pointer-events-none absolute right-8 top-24 z-10 hidden items-center gap-2 rounded-xl bg-brand p-3 pr-4 text-white shadow-xl lg:flex">
-            <Icon name="shield" className="h-7 w-7" />
-            <div><div className="text-base font-extrabold leading-none">10,000+</div><div className="text-[10px] text-white/80">Verified candidates</div></div>
-          </div>
-          <div className="pointer-events-none absolute bottom-16 right-14 z-10 hidden items-center gap-2 rounded-xl bg-white/95 p-2.5 pr-4 shadow-xl backdrop-blur lg:flex">
-            <MatchRing value={94} size={40} />
-            <div><div className="text-xs font-bold text-navy">AI Match 94%</div><div className="text-[10px] text-navy/50">Pre-screened · ready to deploy</div></div>
+          {/* Visual: layered cards instead of floating gimmicks */}
+          <div className="relative hidden lg:block">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand text-white"><Icon name="shield" className="h-6 w-6" /></span>
+                  <div><div className="text-lg font-bold leading-none">10,000+</div><div className="text-xs text-white/60">Verified candidates</div></div>
+                </div>
+                <span className="chip bg-brand/20 text-brand-light">Live</span>
+              </div>
+              <div className="mt-6 space-y-3">
+                {featuredTalent.slice(0, 3).map((f) => (
+                  <div key={f.name} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                    <img src={f.photo} alt="" className="h-10 w-10 rounded-full object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">{f.name}</div>
+                      <div className="truncate text-xs text-white/50">{f.role} · {f.city}</div>
+                    </div>
+                    <MatchRing value={f.match} size={38} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Trust bar */}
-        <div className="border-t border-white/10 bg-navy-900/40">
+        <div className="border-t border-white/10">
           <div className="container-fp grid gap-4 py-5 sm:grid-cols-2 lg:grid-cols-4">
             {[
               ["shield", "100% Verified Candidates"],
@@ -75,7 +91,7 @@ export default function Home({ searchParams }: { searchParams: { sent?: string }
               ["doc", "Complete Documentation Support"],
               ["check-circle", "Smooth Global Deployment"],
             ].map(([ic, t]) => (
-              <div key={t} className="flex items-center gap-3 text-sm text-white/80">
+              <div key={t} className="flex items-center gap-3 text-sm text-white/70">
                 <Icon name={ic} className="h-5 w-5 text-brand-light" />
                 {t}
               </div>

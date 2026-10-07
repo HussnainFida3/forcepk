@@ -1,14 +1,14 @@
 import Icon from "@/components/Icon";
 import { currentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { updateCompanyProfile } from "@/lib/mutations";
+import { updateCompanyProfile, uploadCompanyLogo } from "@/lib/mutations";
 
 export const metadata = { title: "Company Profile" };
 export const dynamic = "force-dynamic";
 
 export default async function EmployerProfile({ searchParams }: { searchParams: { saved?: string } }) {
   const u = await currentUser();
-  const c = u?.companyId ? await prisma.company.findUnique({ where: { id: u.companyId }, select: { name: true, crNumber: true, industry: true, city: true, website: true, about: true, contactName: true, phone: true, status: true } }) : null;
+  const c = u?.companyId ? await prisma.company.findUnique({ where: { id: u.companyId }, select: { name: true, crNumber: true, industry: true, city: true, website: true, about: true, contactName: true, phone: true, status: true, logoUrl: true } }) : null;
 
   return (
     <div className="space-y-6">
@@ -20,6 +20,20 @@ export default async function EmployerProfile({ searchParams }: { searchParams: 
       {searchParams?.saved && (
         <div className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm font-medium text-brand-dark"><Icon name="check-circle" className="h-5 w-5" /> Profile saved.</div>
       )}
+
+      <form action={uploadCompanyLogo} className="card flex flex-wrap items-center gap-5 p-6">
+        <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl border border-navy/10 bg-navy-50">
+          {c?.logoUrl ? <img src={c.logoUrl} alt="Company logo" className="h-full w-full object-contain" /> : <Icon name="building" className="h-8 w-8 text-navy/30" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-semibold text-navy">Company logo</h2>
+          <p className="text-sm text-navy/55">PNG, JPG or SVG. Stored on Cloudinary when configured.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <input type="file" name="logo" accept="image/*" required className="text-sm text-navy/70 file:mr-3 file:rounded-lg file:border-0 file:bg-navy file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-navy/90" />
+            <button className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Upload</button>
+          </div>
+        </div>
+      </form>
 
       <form action={updateCompanyProfile} className="card p-6">
         <h2 className="flex items-center gap-2 font-semibold text-navy"><Icon name="building" className="h-5 w-5 text-brand" /> Company details</h2>

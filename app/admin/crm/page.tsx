@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Icon from "@/components/Icon";
 import { getLeads } from "@/lib/queries";
 import { createLead, setLeadStage } from "@/lib/mutations";
@@ -30,16 +31,19 @@ export default async function CrmPage() {
             {leads.length === 0 && <tr><td colSpan={5} className="px-5 py-10 text-center text-navy/40">No leads yet — add your first above.</td></tr>}
             {leads.map((l) => (
               <tr key={l.id}>
-                <td className="px-5 py-3"><div className="font-medium text-navy">{l.name}</div><div className="text-xs text-navy/40">{l.email ?? l.phone ?? "—"}</div></td>
+                <td className="px-5 py-3"><Link href={`/admin/crm/${l.id}`} className="font-medium text-navy hover:text-brand">{l.name}</Link><div className="text-xs text-navy/40">{l.email ?? l.phone ?? "—"}</div></td>
                 <td className="px-5 py-3 text-navy/60">{l.company ?? "—"}</td>
                 <td className="px-5 py-3 text-navy/60">{l.source ?? "—"}</td>
                 <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone[l.stage]}`}>{l.stage}</span></td>
-                <td className="px-5 py-3 text-right">
-                  {NEXT[l.stage] && (
-                    <form action={setLeadStage.bind(null, l.id, NEXT[l.stage]!)}>
-                      <button className="inline-flex items-center gap-1 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">→ {NEXT[l.stage]}</button>
-                    </form>
-                  )}
+                <td className="px-5 py-3">
+                  <div className="flex justify-end gap-2">
+                    <Link href={`/admin/crm/${l.id}`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy/70 hover:border-brand hover:text-brand">Edit</Link>
+                    {NEXT[l.stage] && (
+                      <form action={setLeadStage.bind(null, l.id, NEXT[l.stage]!)}>
+                        <button className="inline-flex items-center gap-1 rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">→ {NEXT[l.stage]}</button>
+                      </form>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

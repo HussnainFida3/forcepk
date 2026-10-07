@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
+import { deleteCandidate } from "@/lib/mutations";
 
 export const metadata = { title: "Candidates" };
 export const dynamic = "force-dynamic";
@@ -28,7 +29,11 @@ export default async function AdminCandidates({ searchParams }: { searchParams: 
                 <td className="px-5 py-3 text-navy/60">{c.experienceYrs}y</td>
                 <td className="px-5 py-3 text-navy/70">{c._count.applications}</td>
                 <td className="px-5 py-3"><span className="flex items-center gap-1 text-xs font-semibold text-brand-dark"><Icon name="check-circle" className="h-4 w-4" /> {c.profileStrength}%</span></td>
-                <td className="px-5 py-3 text-right"><Link href={`/admin/candidates/${c.id}`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy hover:border-brand hover:text-brand">View</Link></td>
+                <td className="px-5 py-3"><div className="flex justify-end gap-2">
+                  <Link href={`/admin/candidates/${c.id}`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy hover:border-brand hover:text-brand">View</Link>
+                  <Link href={`/admin/candidates/${c.id}/edit`} className="rounded-md border border-navy/15 px-3 py-1.5 text-xs font-semibold text-navy/70 hover:border-brand hover:text-brand">Edit</Link>
+                  <form action={deleteCandidate.bind(null, c.id)}><button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Delete</button></form>
+                </div></td>
               </tr>
             ))}
           </tbody>

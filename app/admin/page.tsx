@@ -1,8 +1,8 @@
 import Icon from "@/components/Icon";
 import StatCard from "@/components/ui/StatCard";
 import { AreaChart, Donut, BarChart, ColumnChart, RadialGauge, Heatmap, CHART_COLORS } from "@/components/ui/charts";
-import { urgent, toneMap } from "@/lib/admin";
-import { getCommandCenter, getAdminStats } from "@/lib/queries";
+import { toneMap } from "@/lib/admin";
+import { getCommandCenter, getAdminStats, getUrgentActions } from "@/lib/queries";
 import { setCompanyStatus } from "@/lib/mutations";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const docTone: Record<string, string> = { VERIFIED: "text-brand-dark", PENDING: "text-amber-600", MISSING: "text-red-600", EXPIRED: "text-navy/50" };
 
 export default async function CommandCenter() {
-  const [cc, { pendingCompanies }] = await Promise.all([getCommandCenter(), getAdminStats()]);
+  const [cc, { pendingCompanies }, urgent] = await Promise.all([getCommandCenter(), getAdminStats(), getUrgentActions()]);
 
   return (
     <div className="space-y-6">
@@ -107,11 +107,12 @@ export default async function CommandCenter() {
         <div className="card p-6 lg:col-span-2">
           <h2 className="flex items-center gap-2 font-semibold text-navy">🔥 Urgent Actions</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {urgent.length === 0 && <p className="text-sm text-navy/40">All clear — no urgent actions right now. 🎉</p>}
             {urgent.map((u) => (
-              <div key={u.t} className="flex items-center gap-3 rounded-xl border border-navy/10 p-3">
+              <a key={u.t} href={u.href} className="flex items-center gap-3 rounded-xl border border-navy/10 p-3 transition hover:border-brand/40 hover:bg-brand/5">
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${toneMap[u.tone]}`}><Icon name={u.icon} className="h-5 w-5" /></span>
                 <span className="text-sm font-medium text-navy/80">{u.t}</span>
-              </div>
+              </a>
             ))}
           </div>
         </div>
