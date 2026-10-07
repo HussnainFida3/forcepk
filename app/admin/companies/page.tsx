@@ -11,8 +11,8 @@ export default async function AdminCompanies() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-navy">Companies</h1><p className="text-sm text-navy/60">{companies.length} employer accounts. Verify, suspend or reactivate.</p></div>
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Company</th><th className="px-5 py-3 font-medium">Location</th><th className="px-5 py-3 font-medium">Reqs</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Actions</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {companies.map((c) => (

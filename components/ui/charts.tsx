@@ -75,8 +75,8 @@ export function Donut({ segments, size = 160 }: { segments: { label: string; val
   const r = size / 2 - 14, cx = size / 2, cy = size / 2, C = 2 * Math.PI * r;
   let offset = 0;
   return (
-    <div className="flex items-center gap-5">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+    <div className="flex flex-wrap items-center justify-center gap-5">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="h-auto max-w-full shrink-0 -rotate-90" style={{ maxWidth: size }}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={NAVY} strokeOpacity="0.07" strokeWidth="14" />
         {segments.map((s) => {
           const len = (s.value / total) * C;
@@ -86,12 +86,12 @@ export function Donut({ segments, size = 160 }: { segments: { label: string; val
         })}
         <text x={cx} y={cy} transform={`rotate(90 ${cx} ${cy})`} textAnchor="middle" dominantBaseline="central" fontSize="22" fontWeight="800" fill={NAVY}>{total}</text>
       </svg>
-      <ul className="space-y-1.5 text-sm">
+      <ul className="min-w-0 space-y-1.5 text-sm">
         {segments.map((s) => (
           <li key={s.label} className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
-            <span className="text-navy/70">{s.label}</span>
-            <span className="font-semibold text-navy">{s.value}</span>
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: s.color }} />
+            <span className="min-w-0 truncate text-navy/70">{s.label}</span>
+            <span className="shrink-0 font-semibold text-navy">{s.value}</span>
           </li>
         ))}
       </ul>

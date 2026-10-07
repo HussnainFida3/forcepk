@@ -15,8 +15,8 @@ export default async function AdminCandidates({ searchParams }: { searchParams: 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-navy">Candidates</h1><p className="text-sm text-navy/60">{candidates.length} candidate profiles{q ? ` matching “${q}”` : ""}.</p></div>
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Name</th><th className="px-5 py-3 font-medium">Profession</th><th className="px-5 py-3 font-medium">City</th><th className="px-5 py-3 font-medium">Exp</th><th className="px-5 py-3 font-medium">Applications</th><th className="px-5 py-3 font-medium">Profile</th><th className="px-5 py-3 text-right font-medium">Action</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {candidates.length === 0 && <tr><td colSpan={7} className="px-5 py-10 text-center text-navy/40">No candidates found.</td></tr>}

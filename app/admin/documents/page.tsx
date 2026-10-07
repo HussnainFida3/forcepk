@@ -21,8 +21,8 @@ export default async function AdminDocuments() {
         <p className="text-sm text-navy/60">Review uploaded candidate documents and flag issues for correction.</p>
       </div>
 
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45">
             <tr><th className="px-5 py-3 font-medium">Candidate</th><th className="px-5 py-3 font-medium">Document</th><th className="px-5 py-3 font-medium">File</th><th className="px-5 py-3 text-right font-medium">Action</th></tr>
           </thead>

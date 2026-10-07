@@ -70,7 +70,7 @@ export default async function EmployerDashboard({ searchParams }: { searchParams
             <Link href="/employer" className="text-xs font-semibold text-brand">View all</Link>
           </div>
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="text-xs uppercase text-navy/40">
                 <tr><th className="pb-3 font-medium">Requirement</th><th className="pb-3 font-medium">Location</th><th className="pb-3 font-medium">Received</th><th className="pb-3 font-medium">Status</th><th className="pb-3 font-medium text-right">Action</th></tr>
               </thead>

@@ -22,25 +22,25 @@ export default function StatCard({
   const up = (delta ?? 0) >= 0;
   return (
     <div className="card group relative overflow-hidden p-5 transition hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs font-medium text-navy/55">{label}</div>
-          <div className="mt-1 text-2xl font-extrabold tracking-tight text-navy">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-xs font-medium text-navy/55">{label}</div>
+          <div className="mt-1 break-words text-2xl font-extrabold tracking-tight text-navy">
             {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
           </div>
         </div>
-        <span className={`grid h-10 w-10 place-items-center rounded-xl ${t.bg} ${t.fg}`}><Icon name={icon} className="h-5 w-5" /></span>
+        <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${t.bg} ${t.fg}`}><Icon name={icon} className="h-5 w-5" /></span>
       </div>
-      <div className="mt-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs">
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2 text-xs">
           {typeof delta === "number" && (
-            <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${up ? "bg-brand/10 text-brand-dark" : "bg-red-100 text-red-600"}`}>
+            <span className={`inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold ${up ? "bg-brand/10 text-brand-dark" : "bg-red-100 text-red-600"}`}>
               {up ? "▲" : "▼"} {Math.abs(delta)}%
             </span>
           )}
-          {sub && <span className="text-navy/45">{sub}</span>}
+          {sub && <span className="truncate text-navy/45">{sub}</span>}
         </div>
-        {spark && spark.length > 1 && <Sparkline data={spark} color={t.spark} className="h-7 w-20" />}
+        {spark && spark.length > 1 && <Sparkline data={spark} color={t.spark} className="h-7 w-20 shrink-0" />}
       </div>
     </div>
   );

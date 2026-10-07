@@ -12,8 +12,8 @@ export default async function ReplacementsPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-navy">Replacement Cases</h1><p className="text-sm text-navy/60">Contractual replacement requests. Terms are agreed per employer before recruitment.</p></div>
-      <div className="card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-navy-50 text-xs uppercase text-navy/45"><tr><th className="px-5 py-3 font-medium">Case</th><th className="px-5 py-3 font-medium">Candidate</th><th className="px-5 py-3 font-medium">Client</th><th className="px-5 py-3 font-medium">Reason</th><th className="px-5 py-3 font-medium">Status</th><th className="px-5 py-3 text-right font-medium">Action</th></tr></thead>
           <tbody className="divide-y divide-navy/10">
             {cases.length === 0 && <tr><td colSpan={6} className="px-5 py-10 text-center text-navy/40">No replacement cases.</td></tr>}
