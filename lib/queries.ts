@@ -243,6 +243,37 @@ export async function getCompanyDetail(id: string) {
   });
 }
 
+// Detail records for admin edit pages.
+export async function getOepDetail(id: string) {
+  return prisma.oep.findUnique({
+    where: { id },
+    include: {
+      users: { select: { id: true, name: true, email: true, role: true } },
+      _count: { select: { applications: true, commissions: true } },
+      applications: { take: 10, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, candidate: { select: { user: { select: { name: true } } } }, requirement: { select: { refCode: true, title: true } } } },
+    },
+  });
+}
+
+export async function getRequirementDetail(id: string) {
+  return prisma.requirement.findUnique({
+    where: { id },
+    include: {
+      company: { select: { id: true, name: true } },
+      applications: { take: 20, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, aiMatch: true, candidate: { select: { id: true, user: { select: { name: true } } } } } },
+      _count: { select: { applications: true } },
+    },
+  });
+}
+
+export async function getLeadDetail(id: string) {
+  return prisma.lead.findUnique({ where: { id }, include: { owner: { select: { name: true } } } });
+}
+
+export async function getCompaniesLite() {
+  return prisma.company.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, take: 500 });
+}
+
 // Live employer dashboard stats.
 export async function getEmployerStats(companyId?: string) {
   const where = companyId ? { companyId } : {};

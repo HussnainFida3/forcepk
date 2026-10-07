@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
 import { createAdminRequirement, setRequirementStatus, toggleRequirementPriority } from "@/lib/mutations";
@@ -43,6 +44,7 @@ export default async function AdminRequirements() {
                 <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone[r.status]}`}>{r.status.replace(/_/g, " ")}</span></td>
                 <td className="px-5 py-3">
                   <div className="flex justify-end gap-2">
+                    <Link href={`/admin/requirements/${r.id}`} className="rounded-md border border-navy/15 px-2.5 py-1.5 text-xs font-semibold text-navy/70 hover:border-brand hover:text-brand">View / Edit</Link>
                     <form action={toggleRequirementPriority.bind(null, r.id, r.priority)}><button className="rounded-md border border-navy/15 px-2.5 py-1.5 text-xs font-semibold text-navy hover:border-brand hover:text-brand">{r.priority === "URGENT" ? "Unflag" : "Prioritize"}</button></form>
                     {r.status === "CLOSED"
                       ? <form action={setRequirementStatus.bind(null, r.id, "OPEN")}><button className="rounded-md bg-brand px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark">Reopen</button></form>

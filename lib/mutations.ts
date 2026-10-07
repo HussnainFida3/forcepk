@@ -520,6 +520,159 @@ export async function shortlistApplication(applicationId: string) {
   revalidatePath("/employer/pipeline");
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// Admin CRUD — Partners (OEP), Requirements, Candidates, Leads, Finance
+// ═══════════════════════════════════════════════════════════════════
+
+const str = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v || null; };
+const num = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v ? parseInt(v, 10) : null; };
+const csv = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").trim(); return v ? v.split(",").map((s) => s.trim()).filter(Boolean) : []; };
+
+// ── Partners (OEP) ──
+export async function updateOep(oepId: string, formData: FormData) {
+  await prisma.oep.update({
+    where: { id: oepId },
+    data: {
+      name: str(formData, "name") ?? undefined,
+      licenseNo: str(formData, "licenseNo") ?? undefined,
+      licenseExpiry: str(formData, "licenseExpiry") ? new Date(String(formData.get("licenseExpiry"))) : null,
+      city: str(formData, "city"),
+      phone: str(formData, "phone"),
+      email: str(formData, "email"),
+      tier: str(formData, "tier") ?? undefined,
+      rating: str(formData, "rating") ? Math.max(0, Math.min(5, Number(formData.get("rating")))) : undefined,
+      specializations: csv(formData, "specializations"),
+    },
+  });
+  await log("oep.update", "Oep", oepId);
+  revalidatePath("/admin/oeps");
+  revalidatePath(`/admin/oeps/${oepId}`);
+  redirect(`/admin/oeps/${oepId}?saved=1`);
+}
+
+export async function deleteOep(oepId: string) {
+  await prisma.$transaction([
+    prisma.application.updateMany({ where: { oepId }, data: { oepId: null } }),
+    prisma.user.updateMany({ where: { oepId }, data: { oepId: null } }),
+    prisma.commission.deleteMany({ where: { oepId } }),
+    prisma.oep.delete({ where: { id: oepId } }),
+  ]);
+  await log("oep.delete", "Oep", oepId);
+  revalidatePath("/admin/oeps");
+  redirect("/admin/oeps?deleted=1");
+}
+
+// ── Requirements ──
+export async function updateRequirement(requirementId: string, formData: FormData) {
+  await prisma.requirement.update({
+    where: { id: requirementId },
+    data: {
+      title: str(formData, "title") ?? undefined,
+      profession: str(formData, "profession") ?? undefined,
+      quantity: num(formData, "quantity") ?? undefined,
+      location: str(formData, "location") ?? undefined,
+      salary: str(formData, "salary"),
+      experience: str(formData, "experience"),
+      education: str(formData, "education"),
+      gender: str(formData, "gender"),
+      contractDuration: str(formData, "contractDuration"),
+      workingHours: str(formData, "workingHours"),
+      interviewMethod: str(formData, "interviewMethod"),
+      specialNotes: str(formData, "specialNotes"),
+      skills: csv(formData, "skills"),
+      priority: (str(formData, "priority") ?? "NORMAL") as never,
+      status: (str(formData, "status") ?? "OPEN") as never,
+    },
+  });
+  await log("requirement.update", "Requirement", requirementId);
+  revalidatePath("/admin/requirements");
+  revalidatePath(`/admin/requirements/${requirementId}`);
+  redirect(`/admin/requirements/${requirementId}?saved=1`);
+}
+
+export async function deleteRequirement(requirementId: string) {
+  await prisma.requirement.delete({ where: { id: requirementId } }); // applications cascade
+  await log("requirement.delete", "Requirement", requirementId);
+  revalidatePath("/admin/requirements");
+  redirect("/admin/requirements?deleted=1");
+}
+
+// ── Candidates (admin) ──
+export async function updateCandidate(candidateId: string, formData: FormData) {
+  await prisma.candidateProfile.update({
+    where: { id: candidateId },
+    data: {
+      profession: str(formData, "profession") ?? undefined,
+      city: str(formData, "city"),
+      experienceYrs: num(formData, "experienceYrs") ?? undefined,
+      saudiExpYrs: num(formData, "saudiExpYrs") ?? undefined,
+      education: str(formData, "education"),
+      salaryExpect: str(formData, "salaryExpect"),
+      summary: str(formData, "summary"),
+      skills: csv(formData, "skills"),
+      languages: csv(formData, "languages"),
+      certifications: csv(formData, "certifications"),
+    },
+  });
+  await log("candidate.admin.update", "CandidateProfile", candidateId);
+  revalidatePath("/admin/candidates");
+  revalidatePath(`/admin/candidates/${candidateId}`);
+  redirect(`/admin/candidates/${candidateId}?saved=1`);
+}
+
+export async function deleteCandidate(candidateId: string) {
+  const profile = await prisma.candidateProfile.findUnique({ where: { id: candidateId }, select: { userId: true } });
+  await prisma.candidateProfile.delete({ where: { id: candidateId } }); // documents + applications cascade
+  if (profile) await prisma.user.delete({ where: { id: profile.userId } }).catch(() => {});
+  await log("candidate.delete", "CandidateProfile", candidateId);
+  revalidatePath("/admin/candidates");
+  redirect("/admin/candidates?deleted=1");
+}
+
+// ── CRM leads ──
+export async function updateLead(leadId: string, formData: FormData) {
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      name: str(formData, "name") ?? undefined,
+      company: str(formData, "company"),
+      email: str(formData, "email"),
+      phone: str(formData, "phone"),
+      source: str(formData, "source"),
+      notes: str(formData, "notes"),
+      stage: (str(formData, "stage") ?? "NEW") as never,
+    },
+  });
+  await log("lead.update", "Lead", leadId);
+  revalidatePath("/admin/crm");
+  redirect("/admin/crm?saved=1");
+}
+
+export async function deleteLead(leadId: string) {
+  await prisma.lead.delete({ where: { id: leadId } });
+  await log("lead.delete", "Lead", leadId);
+  revalidatePath("/admin/crm");
+}
+
+// ── Finance ──
+export async function recordInvoicePayment(invoiceId: string) {
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "PAID" } });
+  await log("invoice.paid", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
+}
+
+export async function voidInvoice(invoiceId: string) {
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "VOID" } });
+  await log("invoice.void", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
+}
+
+export async function deleteInvoice(invoiceId: string) {
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+  await log("invoice.delete", "Invoice", invoiceId);
+  revalidatePath("/admin/finance");
+}
+
 // ── Online payment (Stripe when keyed) ──
 export async function payInvoice(invoiceId: string) {
   const inv = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { amount: true, currency: true } });

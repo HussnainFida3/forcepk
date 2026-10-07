@@ -1,7 +1,7 @@
 import Icon from "@/components/Icon";
 import { prisma } from "@/lib/prisma";
 import { getFinance } from "@/lib/queries";
-import { createInvoice, setInvoiceStatus, setCommissionStatus, payInvoice } from "@/lib/mutations";
+import { createInvoice, setInvoiceStatus, setCommissionStatus, payInvoice, voidInvoice, deleteInvoice } from "@/lib/mutations";
 
 export const metadata = { title: "Finance" };
 export const dynamic = "force-dynamic";
@@ -49,14 +49,16 @@ export default async function FinancePage() {
                   <tr key={i.id}>
                     <td className="py-2.5 font-medium text-navy">{i.company.name}</td>
                     <td className="py-2.5 font-semibold text-navy">{money(i.amount, i.currency)}</td>
-                    <td className="py-2.5"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${i.status === "PAID" ? "bg-brand/10 text-brand-dark" : "bg-amber-100 text-amber-700"}`}>{i.status}</span></td>
+                    <td className="py-2.5"><span className={`rounded-full px-2 py-0.5 text-xs font-medium ${i.status === "PAID" ? "bg-brand/10 text-brand-dark" : i.status === "VOID" ? "bg-navy/10 text-navy/50" : "bg-amber-100 text-amber-700"}`}>{i.status}</span></td>
                     <td className="py-2.5 text-right">
-                      {i.status !== "PAID" && (
-                        <div className="flex justify-end gap-3">
+                      <div className="flex flex-wrap justify-end gap-3">
+                        {i.status !== "PAID" && i.status !== "VOID" && <>
                           <form action={payInvoice.bind(null, i.id)}><button className="text-xs font-semibold text-brand">Pay online</button></form>
                           <form action={setInvoiceStatus.bind(null, i.id, "PAID")}><button className="text-xs font-semibold text-navy/50 hover:text-navy">Mark paid</button></form>
-                        </div>
-                      )}
+                          <form action={voidInvoice.bind(null, i.id)}><button className="text-xs font-semibold text-amber-600 hover:text-amber-700">Void</button></form>
+                        </>}
+                        <form action={deleteInvoice.bind(null, i.id)}><button className="text-xs font-semibold text-red-500 hover:text-red-600">Delete</button></form>
+                      </div>
                     </td>
                   </tr>
                 ))}
