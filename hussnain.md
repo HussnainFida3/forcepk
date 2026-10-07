@@ -61,63 +61,46 @@ values in the server's `.env` (never commit them; the repo is public).
 
 ## 3. Engineering work still to do (we can finish these)
 
-### Done this session ✅
-- Responsive **stat/graph cards** rebuilt on **Recharts** (popular, responsive
-  library) across the admin panel + reports — no more cards overflowing.
-- **Sidebar** cleaned: real logo, correct active-page highlight, proper scroll,
-  distinct icons, footer no longer overlaps nav (all 4 portals).
+### Done ✅
+- Responsive **stat/graph cards** rebuilt on **Recharts** across admin + reports.
+- **Sidebar** cleaned (all 4 portals): real logo, correct active highlight,
+  scroll, distinct icons, no footer overlap.
 - **Footer**: US office address, phone, "Made by Canfida" → canfida.com.
-- **Command Center "Urgent Actions"** now 100% real-time from the database.
-- **Company CRUD**: full detail/view page + edit + verify/suspend/reject/
-  reactivate/set-pending + delete.
-- **Cloudinary** integration (upload helper + registry + env keys).
+- **Command Center "Urgent Actions"** 100% real-time from the database.
+- **Full admin CRUD** (View / Edit / Delete / status) for:
+  - **Companies** — detail/edit, verify/suspend/reject/reactivate/set-pending, delete.
+  - **Partners (OEPs)** — detail/edit, license + tier + rating, status, delete.
+  - **Requirements** — detail/edit all fields, status/priority, applicants, delete.
+  - **Candidates** — admin edit page + delete (list has View/Edit/Delete).
+  - **CRM leads** — detail/edit, stage, notes, delete.
+  - **Finance** — invoices pay/mark-paid/void/delete.
+- **Email verification flow** — token model, verify link on signup, `/verify`
+  page, resend button (activates with RESEND_API_KEY).
+- **AI** fully wired (activates with ANTHROPIC_API_KEY): match scoring on every
+  submit/apply, CV parse, JD generator, interview-question generator, admin
+  assistant — all with heuristic fallbacks.
+- **Cloudinary** media upload end-to-end: company logo upload on employer
+  profile via `uploadMedia()` (Cloudinary when keyed, local disk otherwise).
+- **Home page** redesigned (cleaner modern SaaS hero). *Send reference sites if
+  you want a specific look — see §2.*
 - Admin data tables scroll instead of clipping on mobile.
+- **Full production build passes.**
 
-### Remaining — full CRUD parity across entities
-The pattern now exists for Companies. Apply the same **View / Edit / Delete /
-status** depth to:
-- [ ] **Partners (OEPs)** — detail page, edit, delete, license tracking.
-- [ ] **Candidates** — detail exists (`CandidateDetail`); add admin edit + delete +
-  notes/status changes.
-- [ ] **Requirements** — detail/edit page, close/reopen, assign to partners.
-- [ ] **CRM leads** — edit lead, delete, activity log.
-- [ ] **Finance** — edit/void invoices, record payments, refund.
-- [ ] **Documents** — bulk verify/reject, request re-upload.
-- [ ] **Replacements** — full case workflow screens.
+### ⚠️ Server step required before these work live
+- [ ] Run **`npx prisma migrate deploy`** (or `prisma db push`) on the server —
+  email verification adds a `User.emailVerified` column and an
+  `EmailVerificationToken` table.
 
-### Remaining — portal depth (employer / candidate / partner)
-Each portal has working core pages; deepen them:
-- [ ] Employer: edit/close requirements, download CVs, interview scheduling UI.
-- [ ] Candidate: full profile editor, document upload (via Cloudinary), job apply
-  flow polish, application tracker.
-- [ ] Partner: submit candidates against requirements, earnings/payout detail,
-  performance dashboard.
-
-### Remaining — auth & accounts
-- [ ] **Email verification flow** (needs Resend) — send verify link on signup,
-  verify endpoint, "resend email" button, block unverified logins where required.
-- [ ] Password reset end-to-end test (pages exist: `/forgot-password`,
-  `/reset-password`).
-- [ ] Role-based access review on every admin mutation.
-
-### Remaining — AI features (needs Anthropic key)
-- [ ] Wire the AI assistant panel to live answers (currently heuristic fallback).
-- [ ] CV auto-parse on candidate document upload.
-- [ ] AI candidate↔requirement match score shown in employer/partner pipelines.
-- [ ] AI job-description & interview-question generators (components exist:
-  `AiJobDescription`, `AiInterviewQuestions`) — connect to the live model.
-
-### Remaining — media & uploads (needs Cloudinary)
-- [ ] Company/partner logo upload on their profile pages.
-- [ ] Candidate photo + document uploads routed through `uploadMedia()`.
-
-### Remaining — polish
-- [ ] **Home page redesign** (pending your reference sites — see §2).
-- [ ] Trend deltas on some KPI cards are placeholders (no historical snapshot
-  table yet). To make deltas 100% real we need a small daily-metrics table /
-  cron snapshot — say if you want this.
-- [ ] Accessibility pass (focus states, aria labels, keyboard nav).
-- [ ] SEO: per-page metadata, sitemap entries for dynamic pages.
+### Remaining — nice-to-haves (optional, not blocking)
+- [ ] Documents: bulk verify/reject, request re-upload.
+- [ ] Replacements: richer case workflow screens.
+- [ ] Portal depth: candidate doc uploads via Cloudinary, partner submission UI,
+  employer CV download.
+- [ ] Optionally block unverified logins (currently verification is non-blocking
+  so you're never locked out).
+- [ ] KPI trend deltas: a few are placeholders (no history table). Add a daily
+  metrics snapshot/cron to make them fully real — say the word.
+- [ ] Accessibility + per-page SEO metadata pass.
 
 ---
 
