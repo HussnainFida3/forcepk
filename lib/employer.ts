@@ -2,18 +2,15 @@ import { toneMap } from "./admin";
 export { toneMap };
 
 export const empNav = [
-  { label: "Dashboard", icon: "gear", href: "/employer", active: true },
-  { label: "My Requirements", icon: "doc", href: "/employer" },
-  { label: "Pipeline", icon: "gear", href: "/employer/pipeline" },
+  { label: "Dashboard", icon: "wheel", href: "/employer" },
+  { label: "Post Requirement", icon: "bolt", href: "/employer/requirements/new" },
+  { label: "My Requirements", icon: "doc", href: "/employer/requirements" },
+  { label: "Pipeline", icon: "briefcase", href: "/employer/pipeline" },
   { label: "Candidates", icon: "users", href: "/employer/candidates" },
-  { label: "Shortlist", icon: "star", href: "/employer/candidates" },
   { label: "Interviews", icon: "chat", href: "/employer/interviews" },
-  { label: "Selected", icon: "check-circle", href: "/employer" },
-  { label: "Documentation", icon: "shield", href: "/employer" },
-  { label: "Deployment", icon: "globe", href: "/employer" },
   { label: "Replacements", icon: "shield", href: "/employer/replacements" },
-  { label: "Messages", icon: "chat", href: "/messages" },
-  { label: "Invoices", icon: "award", href: "/employer" },
+  { label: "Invoices", icon: "award", href: "/employer/invoices" },
+  { label: "Messages", icon: "globe", href: "/messages" },
   { label: "Company Profile", icon: "building", href: "/employer/profile" },
 ] as const;
 
