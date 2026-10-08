@@ -12,6 +12,15 @@ html {
 
 body {
   @apply bg-white font-sans text-navy antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use the display typeface (Sora) for a premium, eye-catching look. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 @layer components {
