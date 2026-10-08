@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Briefcase, MapPin, Search, ArrowRight, Users, FileText, X } from "lucide-react";
-import { jobs } from "@/lib/data";
+import { jobs, categories } from "@/lib/data";
 import { HERO, jobImg } from "@/lib/images";
+import SearchSuggest, { type Suggestion } from "@/components/SearchSuggest";
 
 function salaryNum(s: string): number {
   const m = s.replace(/,/g, "").match(/\d+/g);
@@ -13,10 +14,21 @@ function salaryNum(s: string): number {
 
 const SORTS = ["Most Relevant", "Highest Salary", "Most Positions"] as const;
 
-export default function JobsClient() {
-  const [query, setQuery] = useState("");
+export default function JobsClient({ initialQuery = "" }: { initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery);
   const [loc, setLoc] = useState("");
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Most Relevant");
+
+  const pool = useMemo<Suggestion[]>(() => {
+    const profs = new Set(jobs.map((j) => j.title));
+    const cats = new Set(categories.map((c) => c.name));
+    const cities = new Set(jobs.map((j) => j.city));
+    return [
+      ...[...profs].map((label) => ({ label, kind: "Profession" as const })),
+      ...[...cats].map((label) => ({ label, kind: "Category" as const })),
+      ...[...cities].map((label) => ({ label, kind: "Location" as const })),
+    ];
+  }, []);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -45,19 +57,16 @@ export default function JobsClient() {
             Find your next opportunity <span className="bg-gradient-to-r from-brand-light to-brand bg-clip-text text-transparent">worldwide</span>
           </h1>
           <p className="mt-3 max-w-2xl text-white/70">Browse verified employer vacancies. Build your ForcePK profile and let employers find you.</p>
-          <form onSubmit={(e) => e.preventDefault()} className="mt-7 grid gap-3 rounded-xl bg-white p-3 text-navy sm:grid-cols-[1fr_1fr_auto]">
-            <div className="flex items-center gap-2 rounded-lg border border-navy/15 px-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
-              <Briefcase className="h-5 w-5 text-navy/40" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Job title / profession" className="w-full py-2.5 text-sm outline-none" />
-            </div>
-            <div className="flex items-center gap-2 rounded-lg border border-navy/15 px-3 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
+          <div className="relative z-20 mt-7 grid gap-3 rounded-xl bg-white p-3 text-navy sm:grid-cols-[1.3fr_1fr_auto]">
+            <SearchSuggest value={query} onChange={setQuery} onPick={setQuery} pool={pool} placeholder="Job title / profession" />
+            <div className="flex items-center gap-2 rounded-xl border border-navy/15 px-3.5 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/20">
               <MapPin className="h-5 w-5 text-navy/40" />
               <input value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="City / Country" className="w-full py-2.5 text-sm outline-none" />
             </div>
-            <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-dark">
-              <Search className="h-4 w-4" /> Search Jobs
+            <button type="button" className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-dark">
+              <Search className="h-4 w-4" /> Search
             </button>
-          </form>
+          </div>
         </div>
       </section>
 

@@ -11,9 +11,9 @@ import MatchRing from "@/components/ui/MatchRing";
 import { Sparkline } from "@/components/ui/charts";
 import { categories, jobs, steps, stats, testimonials, faqs, featuredTalent } from "@/lib/data";
 import { getLocale, t } from "@/lib/i18n";
-import { createPublicLead } from "@/lib/mutations";
 import { HERO, CATEGORY_IMG, jobImg } from "@/lib/images";
 import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
+import HomeSearch from "@/components/HomeSearch";
 
 function parseStat(v: string): { n: number; suffix: string } {
   const m = v.match(/([\d,]+)(.*)$/);
@@ -37,9 +37,8 @@ const WHY: { Icon: LucideIcon; title: string; body: string }[] = [
 
 const STEP_ICONS: LucideIcon[] = [ClipboardList, Users, UserCheck, Plane];
 
-export default function Home({ searchParams }: { searchParams: { sent?: string } }) {
+export default function Home() {
   const locale = getLocale();
-  const sent = !!searchParams?.sent;
   return (
     <>
       {/* ───────── HERO ───────── */}
@@ -134,29 +133,26 @@ export default function Home({ searchParams }: { searchParams: { sent?: string }
         </div>
       </section>
 
-      {/* ───────── REQUIREMENT BAR ───────── */}
+      {/* ───────── SEARCH BAND ───────── */}
       <section className="bg-navy-50 py-10">
         <div className="container-fp">
           <div className="card bg-white p-5 shadow-xl sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Users className="h-5 w-5" /></span>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Search className="h-5 w-5" /></span>
               <div>
-                <h2 className="text-lg font-bold text-navy">Need manpower for your business?</h2>
-                <p className="text-sm text-navy/55">Tell us what workforce you need and get matched with verified global talent.</p>
+                <h2 className="text-lg font-bold text-navy">Find verified talent &amp; live opportunities</h2>
+                <p className="text-sm text-navy/55">Search thousands of jobs and pre-screened candidates — results update as you type.</p>
               </div>
             </div>
-            {sent ? (
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/5 p-4 text-sm font-medium text-brand-dark"><CheckCircle2 className="h-5 w-5" /> Thank you! Your requirement has been received. Our team will reach out within 24 hours.</div>
-            ) : (
-              <form action={createPublicLead} className="mt-4 grid gap-3 md:grid-cols-5">
-                <input type="hidden" name="returnTo" value="/" />
-                <input name="profession" required placeholder="Profession (e.g. Electrician)" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-                <input name="quantity" placeholder="No. of workers" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-                <input name="location" placeholder="City / Country" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-                <input name="email" type="email" placeholder="Work email" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-                <button type="submit" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-brand px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-dark">Submit <ArrowRight className="h-4 w-4" /></button>
-              </form>
-            )}
+            <div className="mt-4"><HomeSearch /></div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-navy/50">
+              <span className="font-medium text-navy/60">Popular:</span>
+              <Link href="/jobs?q=Electrician" className="hover:text-brand">Electrician</Link>
+              <Link href="/jobs?q=Welder" className="hover:text-brand">Welder</Link>
+              <Link href="/jobs?q=HVAC" className="hover:text-brand">HVAC Technician</Link>
+              <Link href="/jobs?q=Driver" className="hover:text-brand">Driver</Link>
+              <Link href="/employers#post" className="ml-auto inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-dark">Hiring? Post a requirement <ArrowRight className="h-3 w-3" /></Link>
+            </div>
           </div>
         </div>
       </section>
