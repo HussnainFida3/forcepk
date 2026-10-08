@@ -31,7 +31,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
   return (
-    <html lang={locale} dir={dirFor(locale)} className={`${sans.variable} ${display.variable}`}>
+    <html lang={locale} dir={dirFor(locale)} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>{children}<WhatsAppButton /><CookieConsent /></body>
     </html>
   );
