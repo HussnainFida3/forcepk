@@ -10,3 +10,5 @@
 next-env.d.ts
 /.pgdata
 /scripts/*.log
+cc/
+ref/
