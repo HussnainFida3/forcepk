@@ -14,6 +14,7 @@ import { getLocale, t } from "@/lib/i18n";
 import { HERO, CATEGORY_IMG, jobImg } from "@/lib/images";
 import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
 import HomeSearch from "@/components/HomeSearch";
+import RequirementForm from "@/components/RequirementForm";
 
 function parseStat(v: string): { n: number; suffix: string } {
   const m = v.match(/([\d,]+)(.*)$/);
@@ -133,15 +134,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ───────── SEARCH BAND ───────── */}
+      {/* ───────── SEARCH + REQUIREMENT BAND ───────── */}
       <section className="bg-navy-50 py-10">
         <div className="container-fp">
           <div className="card bg-white p-5 shadow-xl sm:p-6">
+            {/* Search */}
             <div className="flex items-center gap-3">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Search className="h-5 w-5" /></span>
               <div>
-                <h2 className="text-lg font-bold text-navy">Find verified talent &amp; live opportunities</h2>
-                <p className="text-sm text-navy/55">Search thousands of jobs and pre-screened candidates — results update as you type.</p>
+                <h2 className="text-lg font-bold text-navy">Search jobs &amp; verified talent</h2>
+                <p className="text-sm text-navy/55">Find opportunities by profession, category or location — results update as you type.</p>
               </div>
             </div>
             <div className="mt-4"><HomeSearch /></div>
@@ -151,8 +153,19 @@ export default function Home() {
               <Link href="/jobs?q=Welder" className="hover:text-brand">Welder</Link>
               <Link href="/jobs?q=HVAC" className="hover:text-brand">HVAC Technician</Link>
               <Link href="/jobs?q=Driver" className="hover:text-brand">Driver</Link>
-              <Link href="/employers#post" className="ml-auto inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-dark">Hiring? Post a requirement <ArrowRight className="h-3 w-3" /></Link>
             </div>
+
+            <div className="my-6 border-t border-navy/10" />
+
+            {/* Requirement form (for employers) */}
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Users className="h-5 w-5" /></span>
+              <div>
+                <h2 className="text-lg font-bold text-navy">Need manpower for your business?</h2>
+                <p className="text-sm text-navy/55">Tell us what workforce you need and get matched with verified global talent.</p>
+              </div>
+            </div>
+            <div className="mt-4"><RequirementForm /></div>
           </div>
         </div>
       </section>

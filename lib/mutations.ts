@@ -512,6 +512,27 @@ export async function createPublicLead(formData: FormData) {
   redirect(`${returnTo}?sent=1`);
 }
 
+// Inline variant for client forms (useFormState) — creates the lead and returns
+// a result instead of redirecting, so the success state isn't pinned to the URL.
+export async function submitPublicLead(_prev: { ok: boolean } | null, formData: FormData): Promise<{ ok: boolean }> {
+  const g = (k: string) => String(formData.get(k) ?? "").trim();
+  if (!g("profession") && !g("email")) return { ok: false };
+  const summary = [g("profession"), g("quantity") && `${g("quantity")} workers`, g("location")].filter(Boolean).join(" · ");
+  await prisma.lead.create({
+    data: {
+      name: g("name") || g("email") || g("phone") || "Website inquiry",
+      company: g("company") || null,
+      email: g("email") || null,
+      phone: g("phone") || null,
+      source: "Website",
+      notes: [summary, g("message")].filter(Boolean).join(" | ") || null,
+    },
+  });
+  await log("lead.public", "Lead", g("email") || "web");
+  revalidatePath("/admin/crm");
+  return { ok: true };
+}
+
 // ── Candidate: update own profile ──
 export async function updateCandidateProfile(formData: FormData) {
   const u = await currentUser();
