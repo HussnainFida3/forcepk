@@ -2,15 +2,11 @@ import { toneMap } from "./admin";
 export { toneMap };
 
 export const oepNav = [
-  { label: "Dashboard", icon: "gear", href: "/partner", active: true },
-  { label: "Job Marketplace", icon: "doc", href: "/partner" },
-  { label: "Assigned Requirements", icon: "briefcase", href: "/partner" },
-  { label: "Submit Candidates", icon: "users", href: "/partner/submit" },
-  { label: "Candidate Database", icon: "users", href: "/partner" },
-  { label: "Interviews", icon: "chat", href: "/partner" },
-  { label: "Deployment", icon: "globe", href: "/partner" },
+  { label: "Dashboard", icon: "wheel", href: "/partner" },
+  { label: "Job Marketplace", icon: "doc", href: "/partner/requirements" },
+  { label: "Submit Candidates", icon: "bolt", href: "/partner/submit" },
+  { label: "My Submissions", icon: "users", href: "/partner/submissions" },
   { label: "Earnings", icon: "award", href: "/partner/earnings" },
-  { label: "Performance", icon: "star", href: "/partner" },
   { label: "Messages", icon: "chat", href: "/messages" },
   { label: "Company Profile", icon: "building", href: "/partner/profile" },
 ] as const;

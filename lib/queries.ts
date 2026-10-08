@@ -406,6 +406,35 @@ export async function getOpenRequirements() {
   });
 }
 
+// Partner: candidates this OEP has submitted, with current stage.
+export async function getPartnerSubmissions(oepId?: string) {
+  return prisma.application.findMany({
+    where: oepId ? { oepId } : { oepId: { not: null } },
+    orderBy: { updatedAt: "desc" }, take: 100,
+    select: {
+      id: true, stage: true, aiMatch: true, createdAt: true,
+      candidate: { select: { user: { select: { name: true } }, profession: true, city: true } },
+      requirement: { select: { refCode: true, title: true, location: true } },
+    },
+  });
+}
+
+// Candidate: this user's applications with stage + requirement.
+export async function getCandidateApplications(userId?: string) {
+  if (!userId) return [];
+  const profile = await prisma.candidateProfile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) return [];
+  return prisma.application.findMany({
+    where: { candidateId: profile.id },
+    orderBy: { updatedAt: "desc" }, take: 100,
+    select: {
+      id: true, stage: true, aiMatch: true, createdAt: true,
+      requirement: { select: { refCode: true, title: true, location: true, salary: true } },
+      interviews: { select: { scheduledAt: true, method: true, status: true }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
+  });
+}
+
 // Live OEP partner dashboard stats.
 export async function getPartnerStats(oepId?: string) {
   const where = oepId ? { oepId } : {};
