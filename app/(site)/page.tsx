@@ -51,10 +51,7 @@ export default function Home({ searchParams }: { searchParams: { sent?: string }
 
         <div className="container-fp relative grid items-center gap-12 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
           <div className="animate-fade-up">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-xs font-semibold backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-light" /> {t("hero.badge", locale)}
-            </span>
-            <h1 className="mt-6 text-4xl font-extrabold leading-[1.08] tracking-tight drop-shadow-sm sm:text-5xl lg:text-[3.4rem]">
+            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight drop-shadow-sm sm:text-5xl lg:text-[3.4rem]">
               {t("hero.title1", locale)}{" "}
               <span className="bg-gradient-to-r from-brand-light to-brand bg-clip-text text-transparent">{t("hero.title2", locale)}</span>{t("hero.title3", locale)}
             </h1>
@@ -111,7 +108,9 @@ export default function Home({ searchParams }: { searchParams: { sent?: string }
                       <div className="flex items-center gap-1 truncate text-sm font-semibold">{f.name} <CheckCircle2 className="h-3.5 w-3.5 text-brand-light" /></div>
                       <div className="truncate text-xs text-white/55">{f.role} · {f.city}</div>
                     </div>
-                    <MatchRing value={f.match} size={40} />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-brand/20 px-2.5 py-1 text-xs font-bold text-brand-light">
+                      <Sparkles className="h-3 w-3" /> {f.match}%
+                    </span>
                   </div>
                 ))}
               </div>

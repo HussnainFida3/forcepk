@@ -5,17 +5,18 @@ const cols = [
   { h: "For Employers", links: [["Post Requirement", "/employers#post"], ["Find Manpower", "/employers"], ["How It Works", "/#how"], ["Employer Login", "/login"]] },
   { h: "For Candidates", links: [["Find Jobs", "/jobs"], ["Verified Employers", "/directory"], ["Create Profile", "/register"], ["Candidate Login", "/login"]] },
   { h: "For Partners", links: [["Become an OEP Partner", "/partners"], ["Partner Login", "/login"], ["Job Marketplace", "/partners#marketplace"]] },
-  { h: "Company", links: [["About Us", "/about"], ["Contact", "/about#contact"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
+  { h: "Company", links: [["About Us", "/about"], ["Contact", "/about#contact"], ["Ethical Recruitment", "/ethical-recruitment"], ["Refund & Replacement", "/refund-policy"]] },
+  { h: "Legal", links: [["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"], ["Cookie Policy", "/cookies"]] },
 ] as const;
 
 export default function Footer() {
   return (
     <footer className="bg-navy text-white">
-      <div className="container-fp grid gap-10 py-14 md:grid-cols-5">
+      <div className="container-fp grid gap-10 py-14 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
         <div className="md:col-span-1">
           <Logo light />
           <p className="mt-4 text-sm text-white/60">
-            Connecting Saudi employers with verified Pakistani talent. Skilled. Trusted. Ready to work.
+            Connecting employers worldwide with verified global talent. Skilled. Trusted. Ready to deploy.
           </p>
           <address className="mt-5 space-y-2 text-sm not-italic text-white/60">
             <a href="https://maps.google.com/?q=7901+4th+St+N+%2316960,+St.+Petersburg,+FL+33702" target="_blank" rel="noreferrer" className="flex items-start gap-2 transition hover:text-brand-light">
