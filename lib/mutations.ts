@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { currentUser, nextRefCode } from "@/lib/session";
 import { sendEmail, sendWhatsApp, sendSMS } from "@/lib/integrations/channels";
 import { aiMatchScore, assistantAnswer } from "@/lib/integrations/ai";
+import { runAgentChat } from "@/lib/agents/chat";
 import { createMeeting, createCheckout } from "@/lib/integrations/services";
 import { uploadMedia } from "@/lib/integrations/media";
 import type { Stage, DocType, DocStatus } from "@prisma/client";
@@ -480,16 +481,32 @@ export async function setReplacementStatus(caseId: string, status: "REPORTED" | 
 export async function askAssistant(_prev: { q: string; a: string; ai: boolean } | undefined, formData: FormData): Promise<{ q: string; a: string; ai: boolean }> {
   const q = String(formData.get("q") ?? "").trim();
   if (!q) return { q: "", a: "", ai: false };
-  const [pendingCompanies, companies, oeps, candidates, openRequirements, applications, selected, deployed, missingDocs] = await Promise.all([
-    prisma.company.count({ where: { status: "PENDING" } }),
-    prisma.company.count(), prisma.oep.count(), prisma.candidateProfile.count(),
-    prisma.requirement.count({ where: { status: "OPEN" } }),
-    prisma.application.count(), prisma.application.count({ where: { stage: "SELECTED" } }),
-    prisma.application.count({ where: { stage: "DEPLOYED" } }),
-    prisma.document.count({ where: { status: "MISSING" } }),
-  ]);
-  const { ai, answer } = await assistantAnswer(q, { pendingCompanies, companies, oeps, candidates, openRequirements, applications, selected, deployed, missingDocs, urgentRequirements: openRequirements });
-  return { q, a: answer, ai };
+
+  const u = await currentUser();
+  if (!u || !["SUPER_ADMIN", "OPS_MANAGER"].includes(u.role)) {
+    return { q, a: "You need to be signed in as an admin to use the assistant.", ai: false };
+  }
+
+  // Use the full CEO-agent engine: it can read live data across the whole
+  // platform and take actions via its tools, so it answers free-form questions
+  // (and performs operations) instead of reciting a tiny flat snapshot.
+  try {
+    const { reply } = await runAgentChat("ceo", q);
+    revalidatePath("/admin");
+    return { q, a: reply, ai: true };
+  } catch {
+    // Fallback to the lightweight heuristic answer if the engine is unavailable.
+    const [pendingCompanies, companies, oeps, candidates, openRequirements, applications, selected, deployed, missingDocs] = await Promise.all([
+      prisma.company.count({ where: { status: "PENDING" } }),
+      prisma.company.count(), prisma.oep.count(), prisma.candidateProfile.count(),
+      prisma.requirement.count({ where: { status: "OPEN" } }),
+      prisma.application.count(), prisma.application.count({ where: { stage: "SELECTED" } }),
+      prisma.application.count({ where: { stage: "DEPLOYED" } }),
+      prisma.document.count({ where: { status: "MISSING" } }),
+    ]);
+    const { ai, answer } = await assistantAnswer(q, { pendingCompanies, companies, partners: oeps, candidates, openRequirements, applications, selected, deployed, missingDocs, urgentRequirements: openRequirements });
+    return { q, a: answer, ai };
+  }
 }
 
 // ── Public inquiry capture (no auth) → CRM lead ──
