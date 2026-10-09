@@ -9,19 +9,53 @@ export const dynamic = "force-dynamic";
 const STAGES = ["NEW", "CONTACTED", "MEETING", "PROPOSAL", "AGREEMENT", "WON", "LOST"] as const;
 const NEXT: Record<string, (typeof STAGES)[number] | null> = { NEW: "CONTACTED", CONTACTED: "MEETING", MEETING: "PROPOSAL", PROPOSAL: "AGREEMENT", AGREEMENT: "WON", WON: null, LOST: null };
 const tone: Record<string, string> = { NEW: "bg-navy/10 text-navy", CONTACTED: "bg-blue-100 text-blue-700", MEETING: "bg-amber-100 text-amber-700", PROPOSAL: "bg-purple-100 text-purple-700", AGREEMENT: "bg-teal-100 text-teal-700", WON: "bg-brand/10 text-brand-dark", LOST: "bg-red-100 text-red-700" };
+const dot: Record<string, string> = { NEW: "bg-navy/50", CONTACTED: "bg-blue-500", MEETING: "bg-amber-500", PROPOSAL: "bg-purple-500", AGREEMENT: "bg-teal-500", WON: "bg-brand", LOST: "bg-red-500" };
+const MEANING: Record<string, string> = {
+  NEW: "Just captured — not yet contacted",
+  CONTACTED: "Reached out, awaiting reply",
+  MEETING: "Call or meeting scheduled/held",
+  PROPOSAL: "Quote / proposal sent",
+  AGREEMENT: "Terms agreed, closing paperwork",
+  WON: "Converted to an active client",
+  LOST: "Did not convert / closed",
+};
 
 export default async function CrmPage() {
   const leads = await getLeads();
+  const counts = STAGES.reduce((m, s) => ({ ...m, [s]: leads.filter((l) => l.stage === s).length }), {} as Record<string, number>);
+  const active = leads.filter((l) => l.stage !== "WON" && l.stage !== "LOST").length;
+  const winRate = counts.WON + counts.LOST > 0 ? Math.round((counts.WON / (counts.WON + counts.LOST)) * 100) : 0;
+
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-navy">CRM — Sales Pipeline</h1><p className="text-sm text-navy/60">Track leads from first contact to active client.</p></div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div><h1 className="text-2xl font-bold text-navy">CRM — Sales Pipeline</h1><p className="text-sm text-navy/60">Track leads from first contact to active client.</p></div>
+        <div className="flex gap-2 text-xs">
+          <span className="rounded-full bg-brand/10 px-3 py-1.5 font-semibold text-brand-dark">{active} active leads</span>
+          <span className="rounded-full bg-navy/10 px-3 py-1.5 font-semibold text-navy/70">{winRate}% win rate</span>
+        </div>
+      </div>
 
-      <form action={createLead} className="card grid gap-3 p-5 sm:grid-cols-5">
+      {/* All lead stages — pipeline overview */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        {STAGES.map((s) => (
+          <div key={s} className="card p-4">
+            <div className="flex items-center gap-2">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot[s]}`} />
+              <span className="text-xs font-bold uppercase tracking-wide text-navy/70">{s}</span>
+            </div>
+            <div className="mt-2 text-2xl font-extrabold text-navy">{counts[s]}</div>
+            <p className="mt-1 text-[11px] leading-snug text-navy/50">{MEANING[s]}</p>
+          </div>
+        ))}
+      </div>
+
+      <form action={createLead} className="card grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-5">
         <input name="name" required placeholder="Contact name *" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
         <input name="company" placeholder="Company" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
         <input name="email" placeholder="Email" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
         <input name="source" placeholder="Source (e.g. WhatsApp)" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
-        <button className="btn-primary">Add Lead</button>
+        <button className="btn-primary sm:col-span-2 lg:col-span-1">Add Lead</button>
       </form>
 
       <div className="card overflow-x-auto">

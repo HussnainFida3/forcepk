@@ -12,6 +12,15 @@ html {
 
 body {
   @apply bg-white font-sans text-navy antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use the display typeface (Sora) for a premium, eye-catching look. */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 
 @layer components {
@@ -46,6 +55,70 @@ body {
     @apply transition duration-300 hover:-translate-y-1 hover:shadow-xl;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────
+   Dark mode. The app uses hardcoded navy/white utilities, so instead
+   of editing every file we remap those utilities under .dark. Light
+   mode is untouched. Decorative dark sections (bg-navy hero/footer,
+   translucent white overlays) intentionally stay dark in both themes.
+   ─────────────────────────────────────────────────────────────── */
+.dark {
+  --bg: #0b1220;        /* page background (was bg-navy-50) */
+  --card: #151f31;      /* surfaces that were bg-white */
+  --ink: 226 232 240;   /* primary text channels (slate-200) */
+  color-scheme: dark;
+}
+
+.dark body { background-color: var(--bg); color: rgb(var(--ink)); }
+
+/* Surfaces */
+.dark .bg-white { background-color: var(--card); }
+/* Frosted light surfaces (e.g. the sticky header) → frosted dark */
+.dark .bg-white\/90 { background-color: rgba(11, 18, 32, 0.9); }
+.dark .bg-white\/70 { background-color: rgba(11, 18, 32, 0.7); }
+.dark .bg-navy-50 { background-color: var(--bg); }
+.dark .bg-navy-900 { background-color: #060b14; }
+.dark .card { background-color: var(--card); border-color: rgba(226, 232, 240, 0.1); }
+
+/* Soft navy tints (chips/badges on light surfaces) → light tints on dark */
+.dark .bg-navy\/5 { background-color: rgba(226, 232, 240, 0.06); }
+.dark .bg-navy\/10 { background-color: rgba(226, 232, 240, 0.1); }
+.dark .bg-navy\/15 { background-color: rgba(226, 232, 240, 0.14); }
+
+/* Primary text + every opacity variant used in the app */
+.dark .text-navy { color: rgb(var(--ink)); }
+.dark .text-navy\/80 { color: rgb(var(--ink) / 0.82); }
+.dark .text-navy\/75 { color: rgb(var(--ink) / 0.78); }
+.dark .text-navy\/70 { color: rgb(var(--ink) / 0.72); }
+.dark .text-navy\/65 { color: rgb(var(--ink) / 0.68); }
+.dark .text-navy\/60 { color: rgb(var(--ink) / 0.64); }
+.dark .text-navy\/55 { color: rgb(var(--ink) / 0.6); }
+.dark .text-navy\/50 { color: rgb(var(--ink) / 0.55); }
+.dark .text-navy\/45 { color: rgb(var(--ink) / 0.5); }
+.dark .text-navy\/40 { color: rgb(var(--ink) / 0.46); }
+.dark .text-navy\/35 { color: rgb(var(--ink) / 0.42); }
+.dark .text-navy\/30 { color: rgb(var(--ink) / 0.4); }
+.dark .text-navy\/15 { color: rgb(var(--ink) / 0.3); }
+
+/* Borders */
+.dark .border-navy\/10 { border-color: rgba(226, 232, 240, 0.1); }
+.dark .border-navy\/15 { border-color: rgba(226, 232, 240, 0.14); }
+.dark .border-navy\/20 { border-color: rgba(226, 232, 240, 0.2); }
+.dark .divide-navy\/10 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(226, 232, 240, 0.1); }
+
+/* Component classes that bake in white/navy */
+.dark .btn-outline { border-color: rgba(226, 232, 240, 0.2); color: rgb(var(--ink)); }
+.dark .chip { background-color: rgba(34, 197, 94, 0.16); }
+/* Brand-dark green is too low-contrast on dark surfaces → use brand-light */
+.dark .text-brand-dark { color: #34d36b; }
+
+/* Form controls inherit the dark surface */
+.dark input, .dark textarea, .dark select {
+  color: rgb(var(--ink));
+  background-color: transparent;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: rgb(var(--ink) / 0.4); }
+.dark select option { background-color: var(--card); color: rgb(var(--ink)); }
 
 /* ── Premium animations ── */
 @keyframes floatBlob {

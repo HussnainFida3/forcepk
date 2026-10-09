@@ -60,7 +60,7 @@ export default async function PartnerDashboard({ searchParams }: { searchParams:
               <h2 className="flex items-center gap-2 font-semibold text-navy"><Icon name="doc" className="h-5 w-5 text-brand" /> Job Marketplace</h2>
               <p className="text-sm text-navy/55">Find and submit candidates for the latest requirements.</p>
             </div>
-            <Link href="/partner" className="text-xs font-semibold text-brand">View all</Link>
+            <Link href="/partner/requirements" className="text-xs font-semibold text-brand">View all</Link>
           </div>
           <div className="mt-4 space-y-3">
             {marketplace.map((m) => (

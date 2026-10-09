@@ -2,12 +2,11 @@ import { toneMap } from "./admin";
 export { toneMap };
 
 export const canNav = [
-  { label: "Dashboard", icon: "gear", href: "/candidate", active: true },
+  { label: "Dashboard", icon: "wheel", href: "/candidate" },
   { label: "My Profile", icon: "users", href: "/candidate/profile" },
   { label: "CV Builder", icon: "doc", href: "/candidate/cv" },
   { label: "Job Search", icon: "search", href: "/candidate/jobs" },
-  { label: "Applications", icon: "briefcase", href: "/candidate" },
-  { label: "Interviews", icon: "chat", href: "/candidate" },
+  { label: "Applications", icon: "briefcase", href: "/candidate/applications" },
   { label: "Documents", icon: "shield", href: "/candidate/documents" },
   { label: "Messages", icon: "chat", href: "/messages" },
 ] as const;

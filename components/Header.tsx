@@ -5,6 +5,7 @@ import { useState } from "react";
 import Logo from "./Logo";
 import Icon from "./Icon";
 import LangSwitcher from "./LangSwitcher";
+import ThemeToggle from "./ThemeToggle";
 import { t, type Locale } from "@/lib/dict";
 
 const nav = [
@@ -29,6 +30,7 @@ export default function Header({ locale = "en" as Locale }: { locale?: Locale })
           ))}
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
+          <ThemeToggle />
           <LangSwitcher current={locale} />
           <Link href="/login" className="text-sm font-semibold text-navy hover:text-brand">
             {t("nav.login", locale)}

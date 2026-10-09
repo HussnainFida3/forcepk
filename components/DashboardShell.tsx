@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Icon from "./Icon";
+import ThemeToggle from "./ThemeToggle";
 import { doSignOut } from "@/app/actions";
 
 type NavItem = { label: string; icon: string; href: string; active?: boolean };
@@ -96,6 +97,7 @@ export default function DashboardShell({ nav, tag, user, search, searchHref, unr
             </form>
           </div>
           <div className="flex shrink-0 items-center gap-4">
+            <ThemeToggle />
             <Link href="/notifications" className="relative" aria-label="Notifications">
               <Icon name="chat" className="h-5 w-5 text-navy/60" />
               {unread > 0 && (

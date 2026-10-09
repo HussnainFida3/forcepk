@@ -23,6 +23,8 @@ import {
 
 import { BRAND, NAVY, CHART_COLORS } from "./chart-colors";
 export { CHART_COLORS };
+// Neutral slate for axis labels / gridlines — legible on both light and dark cards.
+const AXIS = "#94a3b8";
 
 const tooltipStyle = {
   contentStyle: { borderRadius: 12, border: "1px solid rgba(12,35,64,0.1)", fontSize: 12, boxShadow: "0 4px 16px rgba(12,35,64,0.08)" },
@@ -66,9 +68,9 @@ export function AreaChart({ data, labels, height = 220 }: { data: number[]; labe
             <stop offset="100%" stopColor={BRAND} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={NAVY} strokeOpacity={0.08} vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.45 }} tickLine={false} axisLine={false} minTickGap={16} />
-        <YAxis tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.4 }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={AXIS} strokeOpacity={0.25} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: AXIS, fillOpacity: 0.9 }} tickLine={false} axisLine={false} minTickGap={16} />
+        <YAxis tick={{ fontSize: 10, fill: AXIS, fillOpacity: 0.8 }} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
         <Tooltip {...tooltipStyle} />
         <Area type="monotone" dataKey="value" name="Applications" stroke={BRAND} strokeWidth={2.5} fill="url(#areaG)" dot={false} activeDot={{ r: 4 }} />
       </RAreaChart>
@@ -115,10 +117,10 @@ export function BarChart({ items }: { items: { label: string; value: number }[] 
     <ResponsiveContainer width="100%" height={height}>
       <RBarChart data={items} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 8 }} barCategoryGap={10}>
         <XAxis type="number" hide />
-        <YAxis type="category" dataKey="label" width={104} tick={{ fontSize: 11, fill: NAVY, fillOpacity: 0.6 }} tickLine={false} axisLine={false} />
+        <YAxis type="category" dataKey="label" width={104} tick={{ fontSize: 11, fill: AXIS, fillOpacity: 0.95 }} tickLine={false} axisLine={false} />
         <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(12,35,64,0.04)" }} />
         <Bar dataKey="value" fill={BRAND} radius={[4, 4, 4, 4]} maxBarSize={22}>
-          <LabelList dataKey="value" position="right" style={{ fontSize: 11, fontWeight: 700, fill: NAVY }} />
+          <LabelList dataKey="value" position="right" style={{ fontSize: 11, fontWeight: 700, fill: AXIS }} />
         </Bar>
       </RBarChart>
     </ResponsiveContainer>
@@ -152,9 +154,9 @@ export function ColumnChart({ items, height = 180 }: { items: { label: string; v
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RBarChart data={items} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={NAVY} strokeOpacity={0.08} vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.5 }} tickLine={false} axisLine={false} />
-        <YAxis tick={{ fontSize: 10, fill: NAVY, fillOpacity: 0.4 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={AXIS} strokeOpacity={0.25} vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 10, fill: AXIS, fillOpacity: 0.9 }} tickLine={false} axisLine={false} />
+        <YAxis tick={{ fontSize: 10, fill: AXIS, fillOpacity: 0.8 }} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
         <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(12,35,64,0.04)" }} />
         <Bar dataKey="value" fill={BRAND} radius={[6, 6, 0, 0]} maxBarSize={44} />
       </RBarChart>

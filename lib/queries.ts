@@ -274,6 +274,33 @@ export async function getCompaniesLite() {
   return prisma.company.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" }, take: 500 });
 }
 
+// Employer's own requirements (for the My Requirements page).
+export async function getEmployerRequirements(companyId?: string) {
+  return prisma.requirement.findMany({
+    where: companyId ? { companyId } : {},
+    orderBy: { createdAt: "desc" }, take: 100,
+    select: { id: true, refCode: true, title: true, profession: true, location: true, quantity: true, status: true, priority: true, createdAt: true, _count: { select: { applications: true } } },
+  });
+}
+
+// Employer's invoices (for the Billing / Invoices page).
+export async function getEmployerInvoices(companyId?: string) {
+  const invoices = await prisma.invoice.findMany({
+    where: companyId ? { companyId } : {},
+    orderBy: { issuedAt: "desc" }, take: 100,
+    select: { id: true, amount: true, currency: true, status: true, issuedAt: true, dueAt: true },
+  });
+  const sum = (pred: (s: string) => boolean) => invoices.filter((i) => pred(i.status)).reduce((t, i) => t + Number(i.amount), 0);
+  return {
+    invoices,
+    totals: {
+      outstanding: sum((s) => s !== "PAID" && s !== "VOID"),
+      paid: sum((s) => s === "PAID"),
+      currency: invoices[0]?.currency ?? "SAR",
+    },
+  };
+}
+
 // Live employer dashboard stats.
 export async function getEmployerStats(companyId?: string) {
   const where = companyId ? { companyId } : {};
@@ -376,6 +403,35 @@ export async function getOpenRequirements() {
   return prisma.requirement.findMany({
     where: { status: "OPEN" }, take: 50, orderBy: { createdAt: "desc" },
     select: { id: true, refCode: true, title: true, profession: true, location: true, quantity: true, experience: true, salary: true },
+  });
+}
+
+// Partner: candidates this OEP has submitted, with current stage.
+export async function getPartnerSubmissions(oepId?: string) {
+  return prisma.application.findMany({
+    where: oepId ? { oepId } : { oepId: { not: null } },
+    orderBy: { updatedAt: "desc" }, take: 100,
+    select: {
+      id: true, stage: true, aiMatch: true, createdAt: true,
+      candidate: { select: { user: { select: { name: true } }, profession: true, city: true } },
+      requirement: { select: { refCode: true, title: true, location: true } },
+    },
+  });
+}
+
+// Candidate: this user's applications with stage + requirement.
+export async function getCandidateApplications(userId?: string) {
+  if (!userId) return [];
+  const profile = await prisma.candidateProfile.findUnique({ where: { userId }, select: { id: true } });
+  if (!profile) return [];
+  return prisma.application.findMany({
+    where: { candidateId: profile.id },
+    orderBy: { updatedAt: "desc" }, take: 100,
+    select: {
+      id: true, stage: true, aiMatch: true, createdAt: true,
+      requirement: { select: { refCode: true, title: true, location: true, salary: true } },
+      interviews: { select: { scheduledAt: true, method: true, status: true }, orderBy: { createdAt: "desc" }, take: 1 },
+    },
   });
 }
 

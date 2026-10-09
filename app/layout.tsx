@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Sora } from "next/font/google";
 import "./globals.css";
 import { getLocale, dirFor } from "@/lib/i18n";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import CookieConsent from "@/components/CookieConsent";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+// Body: Plus Jakarta Sans (smooth, modern, highly readable).
+const sans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+// Headings: Sora (geometric, premium, eye-catching).
+const display = Sora({ subsets: ["latin"], variable: "--font-display", display: "swap", weight: ["500", "600", "700", "800"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://forcepk.com"),
@@ -28,7 +31,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = getLocale();
   return (
-    <html lang={locale} dir={dirFor(locale)} className={inter.variable}>
+    <html lang={locale} dir={dirFor(locale)} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>{children}<WhatsAppButton /><CookieConsent /></body>
     </html>
   );
