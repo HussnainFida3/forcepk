@@ -492,8 +492,10 @@ export async function askAssistant(_prev: { q: string; a: string; ai: boolean } 
   // (and performs operations) instead of reciting a tiny flat snapshot.
   try {
     const { reply } = await runAgentChat("ceo", q);
+    // Strip simple markdown so it renders cleanly as plain text.
+    const clean = reply.replace(/\*\*(.*?)\*\*/g, "$1").replace(/(?<!\*)\*(?!\*)(.*?)\*(?!\*)/g, "$1").replace(/^#+\s*/gm, "").trim();
     revalidatePath("/admin");
-    return { q, a: reply, ai: true };
+    return { q, a: clean, ai: true };
   } catch {
     // Fallback to the lightweight heuristic answer if the engine is unavailable.
     const [pendingCompanies, companies, oeps, candidates, openRequirements, applications, selected, deployed, missingDocs] = await Promise.all([
