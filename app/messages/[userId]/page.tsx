@@ -5,7 +5,7 @@ import { currentUser } from "@/lib/session";
 import { getThread } from "@/lib/queries";
 import { prisma } from "@/lib/prisma";
 import { ROLE_LABELS } from "@/lib/rbac";
-import { sendMessage } from "@/lib/mutations";
+import MessageComposer from "@/components/MessageComposer";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +40,7 @@ export default async function Thread({ params }: { params: { userId: string } })
           })}
         </div>
 
-        <form action={sendMessage} className="flex items-center gap-2 border-t border-navy/10 p-3">
-          <input type="hidden" name="recipientId" value={other.id} />
-          <input name="body" required autoComplete="off" placeholder="Type a message…" className="flex-1 rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
-          <button className="btn-primary"><Icon name="arrow" className="h-4 w-4" /></button>
-        </form>
+        <MessageComposer recipientId={other.id} />
       </div>
     </div>
   );
