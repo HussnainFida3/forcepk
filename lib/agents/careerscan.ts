@@ -64,14 +64,19 @@ async function fetchText(url: string, ms = 10000): Promise<{ ok: boolean; url: s
 }
 
 async function findCareerUrl(domain: string): Promise<string | null> {
-  const bases = [`https://${domain}`, `https://careers.${domain}`, `https://www.${domain}`];
-  for (const base of [bases[1]]) {
-    const r = await fetchText(base, 8000);
-    if (r.ok && /career|job|vacanc|position|hiring|apply/i.test(r.html)) return r.url;
-  }
-  for (const p of CAREER_PATHS) {
-    const r = await fetchText(`https://${domain}${p}`, 8000);
-    if (r.ok && /career|job|vacanc|position|hiring|apply/i.test(r.html)) return r.url;
+  // Probe the most common career URLs in parallel and take the first that
+  // looks like a careers page — keeps a scan to a few seconds, not a minute.
+  const candidates = [
+    `https://careers.${domain}`,
+    `https://${domain}/careers`,
+    `https://${domain}/en/careers`,
+    `https://${domain}/jobs`,
+    `https://${domain}/career`,
+    `https://${domain}/join-us`,
+  ];
+  const results = await Promise.allSettled(candidates.map((u) => fetchText(u, 6000)));
+  for (const r of results) {
+    if (r.status === "fulfilled" && r.value.ok && /career|job|vacanc|position|hiring|apply/i.test(r.value.html)) return r.value.url;
   }
   return null;
 }
@@ -164,20 +169,18 @@ export async function scanCompany(input: { name: string; website?: string; caree
   return { company: input.name, status, jobsFound: jobs.length, careerUrl };
 }
 
-/** Scan a batch of curated companies in a country; stop once `limit` actively-hiring found. */
+/** Scan a batch of curated companies in a country, concurrently, until roughly
+ *  `limit` are checked. For large goals use the scheduler (an UNTIL task) which
+ *  calls this repeatedly in the background. */
 export async function discoverHiringBatch(opts: { country?: string; limit?: number }): Promise<{ scanned: number; hiring: number; country: string }> {
-  const target = Math.min(Math.max(opts.limit ?? 5, 1), 15);
+  const target = Math.min(Math.max(opts.limit ?? 4, 1), 6);
   const seeds = seedsFor(opts.country);
   const already = new Set((await prisma.hiringCompany.findMany({ select: { name: true } })).map((c) => c.name.toLowerCase()));
 
-  let scanned = 0;
+  const window = seeds.filter((s) => !already.has(s.name.toLowerCase())).slice(0, target);
+  const results = await Promise.allSettled(window.map((s) => scanCompany({ name: s.name, website: s.domain, country: opts.country })));
+
   let hiring = 0;
-  for (const s of seeds) {
-    if (hiring >= target || scanned >= target * 3) break;
-    if (already.has(s.name.toLowerCase())) continue;
-    const r = await scanCompany({ name: s.name, website: s.domain, country: opts.country });
-    scanned++;
-    if (r.status === "ACTIVELY_HIRING") hiring++;
-  }
-  return { scanned, hiring, country: opts.country ?? "Gulf" };
+  for (const r of results) if (r.status === "fulfilled" && r.value.status === "ACTIVELY_HIRING") hiring++;
+  return { scanned: window.length, hiring, country: opts.country ?? "Gulf" };
 }
