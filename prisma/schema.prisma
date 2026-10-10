@@ -59,6 +59,7 @@ enum Stage {
   INTERVIEW
   SELECTED
   DOCUMENTATION
+  MEDICAL
   PROCESSING
   READY
   DEPARTURE
@@ -188,6 +189,8 @@ model Company {
   website     String?
   logoUrl     String?
   about       String?
+  agreementText    String?
+  agreementFileUrl String?
   status      AccountStatus @default(PENDING)
   createdAt   DateTime      @default(now())
 
@@ -210,6 +213,9 @@ model Oep {
   phone         String?
   email         String?
   specializations String[]
+  countries     String[]      @default([])
+  agreementText    String?
+  agreementFileUrl String?
   status        AccountStatus @default(PENDING)
   rating        Float         @default(0)
   tier          String        @default("Bronze")
@@ -218,6 +224,7 @@ model Oep {
   users        User[]
   applications Application[]
   commissions  Commission[]
+  requirements Requirement[]
 
   @@index([status])
 }
@@ -255,8 +262,10 @@ model CandidateProfile {
 model Requirement {
   id               String            @id @default(cuid())
   refCode          String            @unique
-  company          Company           @relation(fields: [companyId], references: [id])
-  companyId        String
+  company          Company?          @relation(fields: [companyId], references: [id])
+  companyId        String?
+  oep              Oep?              @relation(fields: [oepId], references: [id])
+  oepId            String?
   title            String
   profession       String
   quantity         Int
@@ -275,6 +284,7 @@ model Requirement {
   overtime         String?
   location         String
   joiningDeadline  DateTime?
+  expiryDate       DateTime?
   interviewMethod  String?
   specialNotes     String?
   status           RequirementStatus @default(DRAFT)

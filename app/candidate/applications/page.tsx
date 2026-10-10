@@ -7,11 +7,11 @@ export const metadata = { title: "My Applications" };
 export const dynamic = "force-dynamic";
 
 // Ordered pipeline for the progress indicator.
-const FLOW = ["SUBMITTED", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "PROCESSING", "DEPLOYED"];
+const FLOW = ["SUBMITTED", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "MEDICAL", "PROCESSING", "DEPLOYED"];
 const stageTone: Record<string, string> = {
   SUBMITTED: "bg-navy/10 text-navy/70", UNDER_REVIEW: "bg-navy/10 text-navy/70", SCREENING: "bg-blue-100 text-blue-700",
   SHORTLISTED: "bg-amber-100 text-amber-700", INTERVIEW: "bg-purple-100 text-purple-700", SELECTED: "bg-teal-100 text-teal-700",
-  DOCUMENTATION: "bg-blue-100 text-blue-700", PROCESSING: "bg-blue-100 text-blue-700", READY: "bg-brand/10 text-brand-dark",
+  DOCUMENTATION: "bg-blue-100 text-blue-700", MEDICAL: "bg-purple-100 text-purple-700", PROCESSING: "bg-blue-100 text-blue-700", READY: "bg-brand/10 text-brand-dark",
   DEPARTURE: "bg-brand/10 text-brand-dark", DEPLOYED: "bg-brand/10 text-brand-dark", REJECTED: "bg-red-100 text-red-700",
 };
 

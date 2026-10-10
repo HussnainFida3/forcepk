@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
 import { getCompanyDetail } from "@/lib/queries";
-import { setCompanyStatus, updateCompany, deleteCompany } from "@/lib/mutations";
+import AgreementCard from "@/components/AgreementCard";
+import { setCompanyStatus, updateCompany, deleteCompany, saveCompanyAgreement } from "@/lib/mutations";
 
 export const metadata = { title: "Company detail" };
 export const dynamic = "force-dynamic";
@@ -92,6 +93,8 @@ export default async function CompanyDetail({ params, searchParams }: { params: 
               ))}
             </div>
           </div>
+
+          <AgreementCard action={saveCompanyAgreement.bind(null, c.id)} text={c.agreementText} fileUrl={c.agreementFileUrl} party="Employer" />
 
           <div className="card border-red-200 p-6">
             <h2 className="font-semibold text-red-600">Danger zone</h2>

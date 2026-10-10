@@ -260,6 +260,7 @@ export async function getRequirementDetail(id: string) {
     where: { id },
     include: {
       company: { select: { id: true, name: true } },
+      oep: { select: { id: true, name: true } },
       applications: { take: 20, orderBy: { createdAt: "desc" }, select: { id: true, stage: true, aiMatch: true, candidate: { select: { id: true, user: { select: { name: true } } } } } },
       _count: { select: { applications: true } },
     },
@@ -403,6 +404,16 @@ export async function getOpenRequirements() {
   return prisma.requirement.findMany({
     where: { status: "OPEN" }, take: 50, orderBy: { createdAt: "desc" },
     select: { id: true, refCode: true, title: true, profession: true, location: true, quantity: true, experience: true, salary: true },
+  });
+}
+
+// Partner: requirements this OEP posted (they need manpower too).
+export async function getOepRequirements(oepId?: string) {
+  if (!oepId) return [];
+  return prisma.requirement.findMany({
+    where: { oepId },
+    orderBy: { createdAt: "desc" }, take: 100,
+    select: { id: true, refCode: true, title: true, profession: true, location: true, quantity: true, status: true, expiryDate: true, createdAt: true },
   });
 }
 

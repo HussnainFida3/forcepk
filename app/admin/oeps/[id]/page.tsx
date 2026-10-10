@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Icon from "@/components/Icon";
 import { getOepDetail } from "@/lib/queries";
-import { setOepStatus, updateOep, deleteOep } from "@/lib/mutations";
+import AgreementCard from "@/components/AgreementCard";
+import { setOepStatus, updateOep, deleteOep, saveOepAgreement } from "@/lib/mutations";
 
 export const metadata = { title: "Partner detail" };
 export const dynamic = "force-dynamic";
@@ -62,6 +63,10 @@ export default async function OepDetail({ params, searchParams }: { params: { id
             <span className="text-xs font-medium text-navy/55">Specializations (comma-separated)</span>
             <input name="specializations" defaultValue={o.specializations.join(", ")} className="mt-1 w-full rounded-lg border border-navy/15 px-3 py-2 text-sm outline-none focus:border-brand" />
           </label>
+          <label className="block">
+            <span className="text-xs font-medium text-navy/55">Countries of interest (comma-separated)</span>
+            <input name="countries" defaultValue={o.countries.join(", ")} className="mt-1 w-full rounded-lg border border-navy/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+          </label>
           <div className="flex justify-end"><button className="rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Save changes</button></div>
         </form>
 
@@ -74,6 +79,8 @@ export default async function OepDetail({ params, searchParams }: { params: { id
               <div className="flex items-center justify-between"><dt className="text-navy/55">Users</dt><dd className="font-semibold text-navy">{o.users.length}</dd></div>
             </dl>
           </div>
+          <AgreementCard action={saveOepAgreement.bind(null, o.id)} text={o.agreementText} fileUrl={o.agreementFileUrl} party="Partner" />
+
           <div className="card border-red-200 p-6">
             <h2 className="font-semibold text-red-600">Danger zone</h2>
             <p className="mt-1 text-sm text-navy/60">Delete this partner. Their submissions are detached (not deleted) and commissions are removed.</p>

@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: { entity: str
       break;
     case "requirements":
       rows = (await prisma.requirement.findMany({ take: 5000, select: { refCode: true, title: true, profession: true, quantity: true, location: true, salary: true, status: true, company: { select: { name: true } } } }))
-        .map((r) => ({ ref: r.refCode, title: r.title, profession: r.profession, quantity: r.quantity, location: r.location, salary: r.salary, status: r.status, company: r.company.name }));
+        .map((r) => ({ ref: r.refCode, title: r.title, profession: r.profession, quantity: r.quantity, location: r.location, salary: r.salary, status: r.status, company: r.company?.name ?? "" }));
       break;
     case "applications":
       rows = (await prisma.application.findMany({ take: 5000, select: { stage: true, aiMatch: true, candidate: { select: { user: { select: { name: true } } } }, requirement: { select: { refCode: true, title: true } } } }))

@@ -6,7 +6,7 @@ import { createInvoice, setInvoiceStatus, setCommissionStatus, payInvoice, voidI
 export const metadata = { title: "Finance" };
 export const dynamic = "force-dynamic";
 
-const money = (n: unknown, c = "USD") => `${c === "USD" ? "$" : c + " "}${Number(n).toLocaleString()}`;
+const money = (n: unknown, c = "SAR") => `${c === "USD" ? "$" : c + " "}${Number(n).toLocaleString()}`;
 
 export default async function FinancePage() {
   const { invoices, commissions } = await getFinance();
@@ -31,7 +31,7 @@ export default async function FinancePage() {
             </select>
           </label>
           <label className="mt-3 flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-navy/70">Amount (USD)</span>
+            <span className="text-xs font-medium text-navy/70">Amount (SAR)</span>
             <input name="amount" type="number" placeholder="5000" required className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </label>
           <button className="btn-primary mt-4 w-full">Create Invoice</button>

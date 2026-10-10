@@ -27,7 +27,7 @@ export default async function RequirementDetail({ params, searchParams }: { para
         <div className="min-w-0">
           <Link href="/admin/requirements" className="mb-2 inline-flex items-center gap-1 text-sm text-navy/50 transition hover:text-brand">← Back to requirements</Link>
           <h1 className="text-2xl font-bold text-navy break-words">{r.title}</h1>
-          <p className="mt-1 text-sm text-navy/60">{r.refCode} · {r.profession} · {r.location} · for {r.company.name}</p>
+          <p className="mt-1 text-sm text-navy/60">{r.refCode} · {r.profession} · {r.location} · for {r.company?.name ?? r.oep?.name ?? "—"}</p>
         </div>
       </div>
 
@@ -48,6 +48,7 @@ export default async function RequirementDetail({ params, searchParams }: { para
             {field("Contract duration", "contractDuration", r.contractDuration)}
             {field("Working hours", "workingHours", r.workingHours)}
             {field("Interview method", "interviewMethod", r.interviewMethod)}
+            {field("Expiry date", "expiryDate", r.expiryDate ? new Date(r.expiryDate).toISOString().slice(0, 10) : "", "date")}
             <label className="block">
               <span className="text-xs font-medium text-navy/55">Priority</span>
               <select name="priority" defaultValue={r.priority} className="mt-1 w-full rounded-lg border border-navy/15 bg-white px-3 py-2 text-sm outline-none focus:border-brand">{PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}</select>

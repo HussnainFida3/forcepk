@@ -6,7 +6,10 @@ export const oepNav = [
   { label: "Job Marketplace", icon: "doc", href: "/partner/requirements" },
   { label: "Submit Candidates", icon: "bolt", href: "/partner/submit" },
   { label: "My Submissions", icon: "users", href: "/partner/submissions" },
+  { label: "Post Requirement", icon: "briefcase", href: "/partner/post-requirement" },
+  { label: "My Requirements", icon: "pin", href: "/partner/my-requirements" },
   { label: "Earnings", icon: "award", href: "/partner/earnings" },
+  { label: "Agreement", icon: "doc", href: "/partner/agreement" },
   { label: "Messages", icon: "chat", href: "/messages" },
   { label: "Company Profile", icon: "building", href: "/partner/profile" },
 ] as const;
