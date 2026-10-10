@@ -9,6 +9,7 @@
 import { prisma } from "@/lib/prisma";
 import { runAgentChat } from "@/lib/agents/chat";
 import { collectLeadsBatch } from "@/lib/agents/leadsource";
+import { discoverHiringBatch } from "@/lib/agents/careerscan";
 import { isForcePkAgent, type ForcePkAgent } from "@/lib/agents/data";
 
 let started = false;
@@ -23,7 +24,7 @@ async function progressCount(agent: ForcePkAgent): Promise<number> {
     case "company-research": return prisma.company.count();
     case "candidate-matching": return prisma.candidateProfile.count();
     case "requirement": return prisma.requirement.count();
-    case "oep-matching": return prisma.oep.count();
+    case "oep-matching": return prisma.hiringCompany.count({ where: { status: "ACTIVELY_HIRING" } });
     case "compliance":
     case "cv-document": return prisma.document.count();
     case "interview": return prisma.interview.count();
@@ -68,6 +69,10 @@ async function processTask(task: { id: string; agent: string; command: string; k
         const remaining = target ? Math.min(30, target - count) : 30;
         const r = await collectLeadsBatch({ region: regionFromCommand(task.command), limit: remaining });
         note = `+${r.inserted} leads (${r.fromOsm} OSM / ${r.generated} gen) from ${r.region}`;
+      } else if (agent === "oep-matching") {
+        const remaining = target ? Math.min(5, target - count) : 5;
+        const r = await discoverHiringBatch({ country: regionFromCommand(task.command), limit: remaining });
+        note = `Scanned ${r.scanned} in ${r.country}, ${r.hiring} actively hiring`;
       } else {
         const res = await runAgentChat(agent, `${task.command}\n\nThis is a repeating job toward a target of ${target}. Perform ONE batch of work now (create/collect roughly 20 items) and stop.`);
         note = res.reply.slice(0, 160);

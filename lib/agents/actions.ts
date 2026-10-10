@@ -5,6 +5,7 @@
 // cross-agent delegation and the task scheduler.
 import { prisma } from "@/lib/prisma";
 import { collectLeadsBatch } from "@/lib/agents/leadsource";
+import { scanCompany, discoverHiringBatch } from "@/lib/agents/careerscan";
 import type { ForcePkAgent } from "@/lib/agents/data";
 
 export interface Tool {
@@ -179,32 +180,52 @@ const requirementTools: Tool[] = [
 
 /* ───────────────────────── OEP / Partners ───────────────────────── */
 
-const oepTools: Tool[] = [
+// Hiring Signals agent — scans company career pages, flags who's actively
+// hiring, saves the jobs, and turns active companies into CRM leads.
+const hiringTools: Tool[] = [
   {
-    name: "list_partners", description: "List recruitment partners (OEPs).",
-    parameters: obj({ status: str("status"), tier: str("Bronze|Silver|Gold|Platinum"), limit: int("default 20") }),
+    name: "scan_company", description: "Visit one company's career page and decide if it is actively hiring; saves its open jobs and (if hiring) adds it as a CRM lead.",
+    parameters: obj({ name: str("company name"), website: str("company domain or website, e.g. aramco.com"), careerUrl: str("direct careers URL if known"), country: str("country") }, ["name"]),
     run: async (a) => {
-      const where: Record<string, unknown> = {};
-      if (S(a.status)) where.status = S(a.status)!.toUpperCase();
-      if (S(a.tier)) where.tier = S(a.tier);
-      const rows = await prisma.oep.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { rating: "desc" }, select: { id: true, name: true, tier: true, rating: true, status: true, city: true } });
-      return { count: rows.length, partners: rows };
+      const r = await scanCompany({ name: S(a.name)!, website: S(a.website), careerUrl: S(a.careerUrl), country: S(a.country) });
+      await logAction("oep-matching", "scan_company", `${r.company} -> ${r.status} (${r.jobsFound} jobs)`);
+      return r;
     },
   },
   {
-    name: "set_partner_status", description: "Verify / suspend an OEP partner.",
-    parameters: obj({ id: str("id"), status: str("VERIFIED|SUSPENDED|PENDING|REJECTED") }, ["id", "status"]),
-    run: async (a) => { const o = await prisma.oep.update({ where: { id: S(a.id)! }, data: { status: S(a.status)!.toUpperCase() as never } }); await logAction("oep-matching", "set_partner_status", `${o.name} -> ${o.status}`); return { id: o.id, status: o.status }; },
+    name: "discover_hiring_companies", description: "Scan the career pages of major companies in a country (e.g. 'Saudi Arabia', 'UAE', 'Qatar') and return which ones are actively hiring. Use schedule_task (kind UNTIL) for large targets.",
+    parameters: obj({ country: str("country to scan"), limit: int("how many actively-hiring companies to find this batch, default 5, max 15") }),
+    run: async (a) => {
+      const r = await discoverHiringBatch({ country: S(a.country), limit: N(a.limit) });
+      await logAction("oep-matching", "discover_hiring_companies", `${r.country}: ${r.hiring} hiring / ${r.scanned} scanned`);
+      return r;
+    },
   },
   {
-    name: "set_partner_tier", description: "Set an OEP partner's tier.",
-    parameters: obj({ id: str("id"), tier: str("Bronze|Silver|Gold|Platinum") }, ["id", "tier"]),
-    run: async (a) => { const o = await prisma.oep.update({ where: { id: S(a.id)! }, data: { tier: S(a.tier) } }); await logAction("oep-matching", "set_partner_tier", `${o.name} -> ${o.tier}`); return { id: o.id, tier: o.tier }; },
+    name: "list_hiring_companies", description: "List scanned companies and their hiring signal. Filter by status (ACTIVELY_HIRING|QUIET|UNREACHABLE) or country.",
+    parameters: obj({ status: str("status filter"), country: str("country filter"), limit: int("default 25") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.status)) where.status = S(a.status)!.toUpperCase();
+      if (S(a.country)) where.country = { contains: S(a.country), mode: "insensitive" };
+      const rows = await prisma.hiringCompany.findMany({ where, take: Math.min(N(a.limit) ?? 25, 100), orderBy: [{ status: "asc" }, { jobsFound: "desc" }], select: { id: true, name: true, status: true, jobsFound: true, country: true, careerUrl: true } });
+      return { count: rows.length, companies: rows };
+    },
   },
   {
-    name: "assign_partner_to_application", description: "Assign an OEP partner to an application (candidate submission).",
-    parameters: obj({ applicationId: str("application id"), oepId: str("OEP id") }, ["applicationId", "oepId"]),
-    run: async (a) => { await prisma.application.update({ where: { id: S(a.applicationId)! }, data: { oepId: S(a.oepId)! } }); await logAction("oep-matching", "assign_partner", `${S(a.oepId)} -> ${S(a.applicationId)}`); return { ok: true }; },
+    name: "list_discovered_jobs", description: "List the open jobs discovered on scanned career pages, optionally filtered by company name.",
+    parameters: obj({ company_contains: str("company name contains"), limit: int("default 25") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.company_contains)) where.company = { name: { contains: S(a.company_contains), mode: "insensitive" } };
+      const rows = await prisma.discoveredJob.findMany({ where, take: Math.min(N(a.limit) ?? 25, 100), orderBy: { createdAt: "desc" }, select: { id: true, title: true, location: true, url: true, company: { select: { name: true } } } });
+      return { count: rows.length, jobs: rows.map((j) => ({ id: j.id, title: j.title, location: j.location, company: j.company.name, url: j.url })) };
+    },
+  },
+  {
+    name: "delete_hiring_company", description: "Remove a scanned company (and its jobs) by id.",
+    parameters: obj({ id: str("hiring company id") }, ["id"]),
+    run: async (a) => { const c = await prisma.hiringCompany.delete({ where: { id: S(a.id)! } }); await logAction("oep-matching", "delete_hiring_company", c.name); return { deleted: c.id }; },
   },
 ];
 
@@ -339,7 +360,7 @@ const BY_AGENT: Record<Exclude<ForcePkAgent, "ceo">, Tool[]> = {
   "lead-gen": leadGenTools,
   "company-research": companyTools,
   requirement: requirementTools,
-  "oep-matching": oepTools,
+  "oep-matching": hiringTools,
   compliance: documentTools,
   "candidate-matching": candidateTools,
   "cv-document": documentTools,

@@ -73,17 +73,19 @@ export async function agentSummary(agent: ForcePkAgent): Promise<Summary> {
       };
     }
     case "oep-matching": {
-      const [total, verified, rating, submissions, byTier] = await Promise.all([
-        prisma.oep.count(),
-        prisma.oep.count({ where: { status: "VERIFIED" } }),
-        prisma.oep.aggregate({ _avg: { rating: true } }),
-        prisma.application.count({ where: { oepId: { not: null } } }),
-        prisma.oep.groupBy({ by: ["tier"], _count: { _all: true } }),
+      // Repurposed as the Hiring Signals agent: scans company career pages.
+      const [scanned, active, quiet, jobs, byCountry, byStatus] = await Promise.all([
+        prisma.hiringCompany.count(),
+        prisma.hiringCompany.count({ where: { status: "ACTIVELY_HIRING" } }),
+        prisma.hiringCompany.count({ where: { status: "QUIET" } }),
+        prisma.discoveredJob.count(),
+        prisma.hiringCompany.groupBy({ by: ["country"], _count: { _all: true } }),
+        prisma.hiringCompany.groupBy({ by: ["status"], _count: { _all: true } }),
       ]);
       return {
-        totalPartners: total, verifiedPartners: verified,
-        avgRating: Number((rating._avg.rating ?? 0).toFixed(2)), submissionsViaPartners: submissions,
-        partnersByTier: toMap(byTier, "tier"),
+        companiesScanned: scanned, activelyHiring: active, quiet, jobsDiscovered: jobs,
+        hiringCompaniesByCountry: toMap(byCountry.filter((c) => c.country), "country"),
+        companiesByStatus: toMap(byStatus, "status"),
       };
     }
     case "compliance": {
@@ -202,8 +204,8 @@ export async function agentActivity(agent: ForcePkAgent, take = 25): Promise<Act
       return rows.map((r) => ({ id: r.id, action: `${r.title} (${r.profession}) — ${r.status}`, targetType: "Requirement", targetId: r.id, createdAt: iso(r.createdAt), admin: null, meta: null }));
     }
     case "oep-matching": {
-      const rows = await prisma.oep.findMany({ orderBy: { createdAt: "desc" }, take, select: { id: true, name: true, tier: true, rating: true, createdAt: true } });
-      return rows.map((r) => ({ id: r.id, action: `Partner ${r.name} — ${r.tier ?? "—"}`, targetType: "OEP", targetId: r.id, createdAt: iso(r.createdAt), admin: null, meta: { rating: r.rating } }));
+      const rows = await prisma.hiringCompany.findMany({ orderBy: { lastCheckedAt: "desc" }, take, select: { id: true, name: true, status: true, jobsFound: true, country: true, lastCheckedAt: true, createdAt: true } });
+      return rows.map((r) => ({ id: r.id, action: `${r.name} — ${r.status}${r.jobsFound ? ` (${r.jobsFound} jobs)` : ""}`, targetType: "Hiring signal", targetId: r.id, createdAt: iso(r.lastCheckedAt ?? r.createdAt), admin: null, meta: { country: r.country } }));
     }
     case "compliance":
     case "cv-document": {

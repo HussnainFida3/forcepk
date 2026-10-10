@@ -525,3 +525,34 @@ model AgentActionLog {
   @@index([agent])
   @@index([createdAt])
 }
+
+// ─── Hiring Signals agent: scanned career pages & discovered jobs ───
+
+model HiringCompany {
+  id            String          @id @default(cuid())
+  name          String          @unique
+  website       String?
+  careerUrl     String?
+  country       String?
+  status        String          @default("UNKNOWN") // ACTIVELY_HIRING | QUIET | UNREACHABLE
+  jobsFound     Int             @default(0)
+  signal        String?         // short AI note on the hiring signal
+  lastCheckedAt DateTime?
+  createdAt     DateTime        @default(now())
+  jobs          DiscoveredJob[]
+
+  @@index([status])
+  @@index([country])
+}
+
+model DiscoveredJob {
+  id         String        @id @default(cuid())
+  company    HiringCompany @relation(fields: [companyRef], references: [id], onDelete: Cascade)
+  companyRef String
+  title      String
+  url        String?
+  location   String?
+  createdAt  DateTime      @default(now())
+
+  @@index([companyRef])
+}

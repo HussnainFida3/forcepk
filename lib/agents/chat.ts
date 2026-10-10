@@ -10,7 +10,7 @@ const AGENT_TITLES: Record<ForcePkAgent, string> = {
   "lead-gen": "Lead Generation Agent",
   "company-research": "Company Research Agent",
   requirement: "Manpower Requirement Agent",
-  "oep-matching": "OEP Matching Agent",
+  "oep-matching": "Hiring Signals Agent",
   compliance: "Compliance Agent",
   "candidate-matching": "Candidate Matching Agent",
   "cv-document": "CV & Document Agent",
