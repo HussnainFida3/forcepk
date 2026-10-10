@@ -13,7 +13,7 @@ import { createMeeting, createCheckout } from "@/lib/integrations/services";
 import { uploadMedia } from "@/lib/integrations/media";
 import type { Stage, DocType, DocStatus } from "@prisma/client";
 
-const STAGE_ORDER: Stage[] = ["SUBMITTED", "UNDER_REVIEW", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "DOCUMENTATION", "PROCESSING", "READY", "DEPARTURE", "DEPLOYED"];
+const STAGE_ORDER: Stage[] = ["SUBMITTED", "UNDER_REVIEW", "SCREENING", "SHORTLISTED", "INTERVIEW", "SELECTED", "DOCUMENTATION", "MEDICAL", "PROCESSING", "READY", "DEPARTURE", "DEPLOYED"];
 
 async function log(action: string, entity: string, entityId: string) {
   const u = await currentUser();
@@ -44,6 +44,7 @@ export async function createRequirement(formData: FormData) {
       workingHours: g("workingHours") || null,
       interviewMethod: g("interviewMethod") || null,
       specialNotes: g("specialNotes") || null,
+      expiryDate: g("expiryDate") ? new Date(g("expiryDate")) : null,
       status: "OPEN",
     },
   });
@@ -65,6 +66,7 @@ export async function createAdminRequirement(formData: FormData) {
       title: g("title") || `${quantity} ${g("profession")}s`, profession: g("profession"),
       quantity, location: g("location"), experience: g("experience") || null, salary: g("salary") || null,
       skills: [], status: "OPEN", priority: (g("priority") || "NORMAL") as never,
+      expiryDate: g("expiryDate") ? new Date(g("expiryDate")) : null,
     },
   });
   await log("requirement.admin.create", "Requirement", req.id);
@@ -156,7 +158,7 @@ async function createCommissionIfNeeded(applicationId: string, oepId: string | n
   if (exists) return;
   const gross = 1500;
   await prisma.commission.create({
-    data: { applicationId, oepId, grossFee: gross, oepShare: gross * 0.4, currency: "USD", status: "PENDING" },
+    data: { applicationId, oepId, grossFee: gross, oepShare: gross * 0.4, currency: "SAR", status: "PENDING" },
   });
 }
 
@@ -164,7 +166,7 @@ export async function createInvoice(formData: FormData) {
   const companyId = String(formData.get("companyId") ?? "");
   const amount = parseFloat(String(formData.get("amount") ?? "0"));
   if (!companyId || !amount) return;
-  await prisma.invoice.create({ data: { companyId, amount, currency: "USD", status: "PENDING" } });
+  await prisma.invoice.create({ data: { companyId, amount, currency: "SAR", status: "PENDING" } });
   await log("invoice.create", "Company", companyId);
   revalidatePath("/admin/finance");
 }
@@ -408,7 +410,11 @@ export async function registerAccount(kind: "employer" | "oep" | "candidate", fo
     newUserId = user.id;
   } else if (kind === "oep") {
     const oep = await prisma.oep.create({
-      data: { name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), email, status: "PENDING" },
+      data: {
+        name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), email, status: "PENDING",
+        licenseExpiry: g("licenseExpiry") ? new Date(g("licenseExpiry")) : null,
+        countries: g("countries") ? g("countries").split(",").map((c) => c.trim()).filter(Boolean) : [],
+      },
     });
     const user = await prisma.user.create({ data: { email, phone: g("phone") || null, name: g("name"), role: "OEP_ADMIN", passwordHash: hash, status: "PENDING", oepId: oep.id } });
     newUserId = user.id;
@@ -461,7 +467,7 @@ export async function setLeadStage(leadId: string, stage: "NEW" | "CONTACTED" | 
 export async function createReplacement(applicationId: string, formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim() || "Not specified";
   const app = await prisma.application.findUnique({ where: { id: applicationId }, select: { requirement: { select: { companyId: true } } } });
-  if (!app) return;
+  if (!app?.requirement.companyId) return;
   const n = await prisma.replacementCase.count();
   await prisma.replacementCase.create({
     data: { caseNo: `FP-R${1000 + n + 1}`, applicationId, companyId: app.requirement.companyId, reason, status: "REPORTED" },
@@ -613,6 +619,7 @@ export async function updateOep(oepId: string, formData: FormData) {
       tier: str(formData, "tier") ?? undefined,
       rating: str(formData, "rating") ? Math.max(0, Math.min(5, Number(formData.get("rating")))) : undefined,
       specializations: csv(formData, "specializations"),
+      countries: csv(formData, "countries"),
     },
   });
   await log("oep.update", "Oep", oepId);
@@ -633,6 +640,59 @@ export async function deleteOep(oepId: string) {
   redirect("/admin/oeps?deleted=1");
 }
 
+// ── Agreements (text + optional scanned image/PDF, stored via Cloudinary/local) ──
+async function saveAgreement(formData: FormData): Promise<{ text: string | null; fileUrl?: string }> {
+  const text = String(formData.get("agreementText") ?? "").trim() || null;
+  const file = formData.get("agreementFile") as File | null;
+  let fileUrl: string | undefined;
+  if (file && file.size > 0) {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const res = await uploadMedia(buffer, "agreements", file.name);
+    if (res.ok) fileUrl = res.url;
+  }
+  return { text, fileUrl };
+}
+
+export async function saveCompanyAgreement(companyId: string, formData: FormData) {
+  const { text, fileUrl } = await saveAgreement(formData);
+  await prisma.company.update({ where: { id: companyId }, data: { agreementText: text, ...(fileUrl ? { agreementFileUrl: fileUrl } : {}) } });
+  await log("company.agreement", "Company", companyId);
+  revalidatePath(`/admin/companies/${companyId}`);
+  revalidatePath("/employer/agreement");
+  redirect(`/admin/companies/${companyId}?saved=1`);
+}
+
+export async function saveOepAgreement(oepId: string, formData: FormData) {
+  const { text, fileUrl } = await saveAgreement(formData);
+  await prisma.oep.update({ where: { id: oepId }, data: { agreementText: text, ...(fileUrl ? { agreementFileUrl: fileUrl } : {}) } });
+  await log("oep.agreement", "Oep", oepId);
+  revalidatePath(`/admin/oeps/${oepId}`);
+  revalidatePath("/partner/agreement");
+  redirect(`/admin/oeps/${oepId}?saved=1`);
+}
+
+// ── OEP-posted requirement (a partner needs manpower too) ──
+export async function createOepRequirement(formData: FormData) {
+  const u = await currentUser();
+  if (!u?.oepId) throw new Error("No partner account");
+  const g = (k: string) => String(formData.get(k) ?? "").trim();
+  const req = await prisma.requirement.create({
+    data: {
+      refCode: await nextRefCode(), oepId: u.oepId, companyId: null,
+      title: g("title") || `${g("quantity") || "1"} ${g("profession")}s`,
+      profession: g("profession"), quantity: parseInt(g("quantity") || "1", 10),
+      location: g("location"), experience: g("experience") || null, salary: g("salary") || null,
+      gender: g("gender") || null, specialNotes: g("specialNotes") || null,
+      expiryDate: g("expiryDate") ? new Date(g("expiryDate")) : null,
+      skills: [], status: "OPEN",
+    },
+  });
+  await log("requirement.oep.create", "Requirement", req.id);
+  revalidatePath("/partner/my-requirements");
+  revalidatePath("/admin/requirements");
+  redirect("/partner/my-requirements?created=" + req.refCode);
+}
+
 // ── Requirements ──
 export async function updateRequirement(requirementId: string, formData: FormData) {
   await prisma.requirement.update({
@@ -650,6 +710,7 @@ export async function updateRequirement(requirementId: string, formData: FormDat
       workingHours: str(formData, "workingHours"),
       interviewMethod: str(formData, "interviewMethod"),
       specialNotes: str(formData, "specialNotes"),
+      expiryDate: str(formData, "expiryDate") ? new Date(String(formData.get("expiryDate"))) : null,
       skills: csv(formData, "skills"),
       priority: (str(formData, "priority") ?? "NORMAL") as never,
       status: (str(formData, "status") ?? "OPEN") as never,

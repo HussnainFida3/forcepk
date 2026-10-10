@@ -87,7 +87,7 @@ values in the server's `.env` (never commit them; the repo is public).
 - **Full production build passes.**
 
 ### ⚠️ Server step required before these work live
-- [ ] Run **`npx prisma migrate deploy`** (or `prisma db push`) on the server —
+- [ ] Run **`npx prisma migrate deploy`** (or `prisma db push`) on the server. Recent schema additions needing it: OEP countries + agreement fields, Company agreement fields, Requirement expiryDate + optional company/oep (OEP-posted requirements), and a new MEDICAL stage. Plus:
   email verification adds a `User.emailVerified` column and an
   `EmailVerificationToken` table.
 

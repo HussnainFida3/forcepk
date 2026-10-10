@@ -27,6 +27,7 @@ export default async function AdminRequirements() {
         <input name="profession" required placeholder="Profession *" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
         <input name="quantity" placeholder="Qty" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
         <input name="location" placeholder="Location" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
+        <input name="expiryDate" type="date" title="Expiry date" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm text-navy/70 outline-none focus:border-brand" />
         <select name="priority" className="rounded-lg border border-navy/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="NORMAL">Normal</option><option value="URGENT">Urgent</option></select>
         <button className="btn-primary sm:col-span-3 lg:col-span-6"><Icon name="doc" className="h-4 w-4" /> Create Requirement</button>
       </form>
@@ -38,7 +39,7 @@ export default async function AdminRequirements() {
             {reqs.map((r) => (
               <tr key={r.id} className={r.priority === "URGENT" ? "bg-red-50/40" : ""}>
                 <td className="px-5 py-3"><div className="flex items-center gap-1.5 font-medium text-navy">{r.priority === "URGENT" && <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-600">URGENT</span>}{r.title}</div><div className="text-xs text-navy/40">{r.refCode} · {r.profession} · {r.location}</div></td>
-                <td className="px-5 py-3 text-navy/60">{r.company.name}</td>
+                <td className="px-5 py-3 text-navy/60">{r.company?.name ?? "OEP requirement"}</td>
                 <td className="px-5 py-3 text-navy/70">{r.quantity}</td>
                 <td className="px-5 py-3 text-navy/70">{r._count.applications}</td>
                 <td className="px-5 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${tone[r.status]}`}>{r.status.replace(/_/g, " ")}</span></td>

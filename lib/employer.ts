@@ -10,6 +10,7 @@ export const empNav = [
   { label: "Interviews", icon: "chat", href: "/employer/interviews" },
   { label: "Replacements", icon: "shield", href: "/employer/replacements" },
   { label: "Invoices", icon: "award", href: "/employer/invoices" },
+  { label: "Agreement", icon: "doc", href: "/employer/agreement" },
   { label: "Messages", icon: "globe", href: "/messages" },
   { label: "Company Profile", icon: "building", href: "/employer/profile" },
 ] as const;

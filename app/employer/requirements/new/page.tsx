@@ -12,8 +12,8 @@ const text = [
   ["gender", "Gender", "Male / Female / Any"],
   ["experience", "Experience", "2–5 years"],
   ["education", "Education", "High School / Diploma"],
-  ["salary", "Salary / budget", "$1,200 /mo"],
-  ["location", "Location *", "Dubai, UAE"],
+  ["salary", "Salary / budget", "SAR 4,500 /mo"],
+  ["location", "Location *", "Riyadh, KSA"],
 ];
 const selects: [string, string, string[]][] = [
   ["contractDuration", "Contract duration", ["1 year", "2 years", "3 years"]],
@@ -48,6 +48,10 @@ export default function NewRequirement() {
             </select>
           </label>
         ))}
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-navy/70">Requirement expiry date</span>
+          <input name="expiryDate" type="date" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+        </label>
         <label className="flex flex-col gap-1.5 sm:col-span-2">
           <span className="text-xs font-medium text-navy/70">Skills (comma separated)</span>
           <input name="skills" placeholder="Electrical work, Wiring, Maintenance"
