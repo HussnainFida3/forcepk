@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import AiJobDescription from "@/components/AiJobDescription";
+import ProfessionSelect from "@/components/ProfessionSelect";
 import { createRequirement } from "@/lib/mutations";
 
 export const metadata = { title: "Create Requirement" };
@@ -36,8 +37,12 @@ export default function NewRequirement() {
         {text.map(([name, label, ph]) => (
           <label key={name} className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-navy/70">{label}</span>
-            <input name={name} placeholder={ph} required={label.includes("*")}
-              className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+            {name === "profession" ? (
+              <ProfessionSelect required={label.includes("*")} />
+            ) : (
+              <input name={name} placeholder={ph} required={label.includes("*")}
+                className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+            )}
           </label>
         ))}
         {selects.map(([name, label, opts]) => (

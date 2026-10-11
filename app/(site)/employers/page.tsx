@@ -3,6 +3,7 @@ import Icon from "@/components/Icon";
 import { categories } from "@/lib/data";
 import { createPublicLead } from "@/lib/mutations";
 import { HERO } from "@/lib/images";
+import ProfessionSelect from "@/components/ProfessionSelect";
 
 export const metadata = { title: "Hire Verified Global Manpower" };
 
@@ -98,7 +99,11 @@ export default function EmployersPage({ searchParams }: { searchParams: { sent?:
             {text.map(([l, ph, name]) => (
               <label key={l} className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-navy/70">{l}</span>
-                <input name={name} placeholder={ph} className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                {name === "profession" ? (
+                  <ProfessionSelect required={false} />
+                ) : (
+                  <input name={name} placeholder={ph} className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+                )}
               </label>
             ))}
             {selects.map(([l, opts]) => (

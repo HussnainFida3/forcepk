@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { submitPublicLead } from "@/lib/mutations";
+import ProfessionSelect from "@/components/ProfessionSelect";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -28,7 +29,7 @@ function Inner({ onReset }: { onReset: () => void }) {
 
   return (
     <form action={action} className="grid gap-3 md:grid-cols-5">
-      <input name="profession" required placeholder="Profession (e.g. Electrician)" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
+      <ProfessionSelect />
       <input name="quantity" placeholder="No. of workers" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
       <input name="location" placeholder="City / Country" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
       <input name="email" type="email" placeholder="Work email" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
