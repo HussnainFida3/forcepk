@@ -15,6 +15,7 @@ import { HERO, CATEGORY_IMG, jobImg } from "@/lib/images";
 import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
 import HomeSearch from "@/components/HomeSearch";
 import RequirementForm from "@/components/RequirementForm";
+import HeroCarousel from "@/components/HeroCarousel";
 
 function parseStat(v: string): { n: number; suffix: string } {
   const m = v.match(/([\d,]+)(.*)$/);
@@ -43,81 +44,7 @@ export default function Home() {
   return (
     <>
       {/* ───────── HERO ───────── */}
-      <section className="relative overflow-hidden bg-navy text-white">
-        <img src={HERO.heroBg} alt="" loading="eager" className="absolute inset-0 h-full w-full scale-105 object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/92 to-navy/45" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-transparent to-navy/30" />
-        <div className="absolute inset-0 bg-[radial-gradient(55%_60%_at_15%_20%,rgba(34,197,94,0.16),transparent)]" />
-
-        <div className="container-fp relative grid items-center gap-12 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
-          <div className="animate-fade-up">
-            <h1 className="text-4xl font-extrabold leading-[1.08] tracking-tight drop-shadow-sm sm:text-5xl lg:text-[3.4rem]">
-              {t("hero.title1", locale)}{" "}
-              <span className="bg-gradient-to-r from-brand-light to-brand bg-clip-text text-transparent">{t("hero.title2", locale)}</span>{t("hero.title3", locale)}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80">{t("hero.sub", locale)}</p>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/employers#post" className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand/30 transition hover:-translate-y-0.5 hover:bg-brand-dark">
-                {t("hero.cta1", locale)} <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/jobs" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 px-6 py-3.5 text-sm font-semibold backdrop-blur transition hover:bg-white/10">
-                <Search className="h-4 w-4" /> {t("hero.cta2", locale)}
-              </Link>
-            </div>
-
-            <ul className="mt-9 grid max-w-lg grid-cols-2 gap-3 sm:grid-cols-4">
-              {[[ShieldCheck, "Verified"], [Clock, "Fast Deploy"], [FileText, "Full Docs"], [Globe, "Worldwide"]].map(([I, label]) => {
-                const Ic = I as LucideIcon;
-                return (
-                  <li key={label as string} className="flex items-center gap-2 text-[13px] font-medium text-white/80">
-                    <Ic className="h-4 w-4 text-brand-light" /> {label as string}
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t border-white/10 pt-7">
-              {stats.slice(0, 3).map((s) => {
-                const { n, suffix } = parseStat(s.value);
-                return (
-                  <div key={s.label}>
-                    <div className="text-2xl font-extrabold text-brand-light sm:text-3xl"><AnimatedNumber value={n} suffix={suffix} /></div>
-                    <div className="mt-1 text-xs text-white/60">{s.label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Live talent card */}
-          <div className="relative hidden lg:block animate-fade-up [animation-delay:120ms]">
-            <div className="rounded-3xl border border-white/15 bg-white/[0.07] p-6 shadow-2xl backdrop-blur-md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand text-white"><ShieldCheck className="h-6 w-6" /></span>
-                  <div><div className="text-lg font-bold leading-none">10,000+</div><div className="text-xs text-white/60">Verified candidates</div></div>
-                </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/20 px-3 py-1 text-xs font-semibold text-brand-light"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-light" /> Live</span>
-              </div>
-              <div className="mt-6 space-y-3">
-                {featuredTalent.slice(0, 4).map((f) => (
-                  <div key={f.name} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10">
-                    <img src={f.photo} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-brand/30" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1 truncate text-sm font-semibold">{f.name} <CheckCircle2 className="h-3.5 w-3.5 text-brand-light" /></div>
-                      <div className="truncate text-xs text-white/55">{f.role} · {f.city}</div>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand/20 px-2.5 py-1 text-xs font-bold text-brand-light">
-                      <Sparkles className="h-3 w-3" /> {f.match}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroCarousel />
 
       {/* ───────── TRUSTED BY (real company logos) ───────── */}
       <section className="border-b border-navy/10 bg-white py-10">
