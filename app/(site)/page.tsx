@@ -16,6 +16,8 @@ import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
 import HomeSearch from "@/components/HomeSearch";
 import RequirementForm from "@/components/RequirementForm";
 import HeroCarousel from "@/components/HeroCarousel";
+import { currentUser } from "@/lib/session";
+import { portalLinks } from "@/lib/portal";
 
 function parseStat(v: string): { n: number; suffix: string } {
   const m = v.match(/([\d,]+)(.*)$/);
@@ -39,12 +41,39 @@ const WHY: { Icon: LucideIcon; title: string; body: string }[] = [
 
 const STEP_ICONS: LucideIcon[] = [ClipboardList, Users, UserCheck, Plane];
 
-export default function Home() {
+export default async function Home() {
   const locale = getLocale();
+  const u = await currentUser();
+  const p = portalLinks(u?.role);
+  const portals = [
+    { ...p.employer, img: HERO.heroEmployers, Icon: Building2, tag: "For Employers", title: "Hire manpower", desc: "Post requirements and manage your hiring pipeline." },
+    { ...p.candidate, img: HERO.heroJobs, Icon: Users, tag: "For Candidates", title: "Find work abroad", desc: "Browse verified vacancies and apply in one click." },
+    { ...p.partner, img: HERO.heroPartners, Icon: Handshake, tag: "For OEP Partners", title: "Recruit & earn", desc: "Submit candidates and earn on every deployment." },
+  ];
   return (
     <>
       {/* ───────── HERO ───────── */}
       <HeroCarousel />
+
+      {/* ───────── PORTAL ENTRY BOXES ───────── */}
+      <section className="bg-white py-10">
+        <div className="container-fp grid gap-5 sm:grid-cols-3">
+          {portals.map((b) => (
+            <Link key={b.tag} href={b.href} className="group relative block h-44 overflow-hidden rounded-2xl shadow-sm ring-1 ring-navy/5 transition hover:-translate-y-1 hover:shadow-xl">
+              <img src={b.img} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/55 to-navy/20" />
+              <div className="relative flex h-full flex-col justify-end p-5">
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur"><b.Icon className="h-3.5 w-3.5" /> {b.tag}</span>
+                <h3 className="mt-2 text-lg font-bold text-white">{b.title}</h3>
+                <p className="text-xs text-white/70">{b.desc}</p>
+                <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-brand-light">
+                  {b.own ? "Open portal" : "Create account"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ───────── TRUSTED BY (real company logos) ───────── */}
       <section className="border-b border-navy/10 bg-white py-10">

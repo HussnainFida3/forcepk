@@ -210,6 +210,7 @@ model Oep {
   licenseNo     String        @unique
   licenseExpiry DateTime?
   city          String?
+  address       String?
   phone         String?
   email         String?
   specializations String[]

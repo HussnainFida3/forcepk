@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
 import { registerAccount } from "@/lib/mutations";
 
 type Kind = "employer" | "oep" | "candidate";
@@ -35,7 +36,7 @@ export default function RegisterForm({ kind }: { kind: Kind }) {
           <Field name="name" label="Your name" required />
           <Field name="email" label="Email" type="email" required />
           <Field name="phone" label="Mobile" />
-          <Field name="password" label="Password" type="password" required />
+          <PasswordInput name="password" label="Password" required minLength={6} withGenerate />
 
           {kind === "employer" && <>
             <Field name="company" label="Company name" required />
@@ -49,7 +50,8 @@ export default function RegisterForm({ kind }: { kind: Kind }) {
             <Field name="licenseNo" label="License no." />
             <Field name="licenseExpiry" label="License expiry date" type="date" />
             <Field name="city" label="City / Country" />
-            <Field name="countries" label="Countries of interest (comma separated)" full />
+            <Field name="address" label="Office address" placeholder="Street, area, city" full />
+            <Field name="countries" label="Countries of interest (comma separated)" placeholder="e.g. Saudi Arabia, UAE, Canada" full />
           </>}
 
           {kind === "candidate" && <>
@@ -69,11 +71,11 @@ export default function RegisterForm({ kind }: { kind: Kind }) {
   );
 }
 
-function Field({ name, label, type = "text", required, full }: { name: string; label: string; type?: string; required?: boolean; full?: boolean }) {
+function Field({ name, label, type = "text", required, full, placeholder }: { name: string; label: string; type?: string; required?: boolean; full?: boolean; placeholder?: string }) {
   return (
     <label className={`flex flex-col gap-1.5 ${full ? "sm:col-span-2" : ""}`}>
       <span className="text-xs font-medium text-navy/70">{label}{required && " *"}</span>
-      <input name={name} type={type} required={required}
+      <input name={name} type={type} required={required} placeholder={placeholder}
         className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
     </label>
   );

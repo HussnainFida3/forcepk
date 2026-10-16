@@ -2,6 +2,8 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import { jobs } from "@/lib/data";
 import { HERO } from "@/lib/images";
+import { currentUser } from "@/lib/session";
+import { portalLinks } from "@/lib/portal";
 
 export const metadata = { title: "Become a Recruitment Partner (OEP)" };
 
@@ -14,7 +16,9 @@ const perks = [
 
 const pipeline = ["Submitted", "Under Review", "Shortlisted", "Interview", "Selected", "Documentation", "Deployed"];
 
-export default function PartnersPage() {
+export default async function PartnersPage() {
+  const u = await currentUser();
+  const partner = portalLinks(u?.role).partner;
   return (
     <>
       <section className="relative overflow-hidden bg-navy py-20 text-white lg:py-24">
@@ -27,7 +31,7 @@ export default function PartnersPage() {
             <h1 className="mt-4 text-3xl font-extrabold sm:text-4xl">Partner with ForcePK and grow your placements</h1>
             <p className="mt-4 text-white/70">Join our verified partner network. Access approved requirements, submit candidates and earn commission on successful deployments.</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/login" className="btn-primary">Become a Partner <Icon name="arrow" className="h-4 w-4" /></Link>
+              <Link href={partner.href} className="btn-primary">{partner.own ? "Go to partner portal" : "Become a Partner"} <Icon name="arrow" className="h-4 w-4" /></Link>
               <Link href="#marketplace" className="btn-ghost">View Job Marketplace</Link>
             </div>
           </div>

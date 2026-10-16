@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
 import { authenticate, signInGoogle } from "@/app/(site)/login/actions";
 
 const demo = [
@@ -60,7 +61,7 @@ function LoginInner({ googleEnabled }: { googleEnabled: boolean }) {
 
           <form action={formAction} className={googleEnabled ? "space-y-4" : "mt-6 space-y-4"}>
             <Input name="identifier" label="Email / Mobile" placeholder="you@company.com" />
-            <Input name="password" type="password" label="Password / OTP" placeholder="••••••••" />
+            <PasswordInput name="password" label="Password / OTP" required />
             <div className="flex justify-end">
               <Link href="/forgot-password" className="text-xs font-medium text-brand hover:underline">Forgot password?</Link>
             </div>

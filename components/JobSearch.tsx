@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Icon from "./Icon";
 import { jobImg } from "@/lib/images";
 
 type Job = { id: string; title: string; city: string; exp: string; positions: number; salary: string };
 
 export default function JobSearch({ jobs, initialQuery = "" }: { jobs: readonly Job[]; initialQuery?: string }) {
-  const [q, setQ] = useState(initialQuery);
+  const sp = useSearchParams();
+  const urlQ = sp.get("q") ?? "";
+  const [q, setQ] = useState(initialQuery || urlQ);
+  // React to category-tile clicks that change ?q= while staying on /jobs.
+  useEffect(() => { setQ(urlQ); }, [urlQ]);
   const [loc, setLoc] = useState("");
   const [sort, setSort] = useState("relevant");
   const [openList, setOpenList] = useState(false);
@@ -98,9 +103,13 @@ export default function JobSearch({ jobs, initialQuery = "" }: { jobs: readonly 
         {results.length === 0 && (
           <div className="card grid place-items-center gap-2 p-12 text-center">
             <Icon name="search" className="h-8 w-8 text-navy/25" />
-            <p className="font-semibold text-navy">No jobs match your search</p>
-            <p className="text-sm text-navy/55">Try a different profession or location, or clear the filters.</p>
-            <button onClick={() => { setQ(""); setLoc(""); }} className="mt-1 text-sm font-semibold text-brand">Clear search</button>
+            <p className="font-semibold text-navy">{q.trim() ? `No ${q.trim()} talent available right now` : "No jobs match your search"}</p>
+            <p className="max-w-md text-sm text-navy/55">We don&apos;t have open vacancies in this category at the moment. Post a requirement and we&apos;ll source it, or create a profile to be matched as soon as one opens.</p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/employers#post" className="btn-primary text-sm">Post a requirement</Link>
+              <Link href="/register/candidate" className="btn-outline text-sm">Create a profile</Link>
+              <button onClick={() => { setQ(""); setLoc(""); }} className="text-sm font-semibold text-brand">Clear search</button>
+            </div>
           </div>
         )}
         {results.map((j) => (

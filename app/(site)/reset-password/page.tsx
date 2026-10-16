@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
 import { prisma } from "@/lib/prisma";
 import { resetPassword } from "../login/actions";
 
@@ -23,10 +24,7 @@ export default async function ResetPassword({ searchParams }: { searchParams: { 
             {searchParams?.error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">Password must be at least 6 characters.</p>}
             <form action={resetPassword} className="mt-6 space-y-4">
               <input type="hidden" name="token" value={token} />
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-navy/70">New password</span>
-                <input name="password" type="password" required minLength={6} placeholder="At least 6 characters" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand" />
-              </label>
+              <PasswordInput name="password" label="New password" placeholder="At least 6 characters" required minLength={6} withGenerate />
               <button className="btn-primary w-full">Update password <Icon name="arrow" className="h-4 w-4" /></button>
             </form>
           </>

@@ -412,7 +412,7 @@ export async function registerAccount(kind: "employer" | "oep" | "candidate", fo
   } else if (kind === "oep") {
     const oep = await prisma.oep.create({
       data: {
-        name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), email, status: "PENDING",
+        name: g("company"), licenseNo: g("licenseNo") || `OEP-${Date.now()}`, city: g("city"), address: g("address") || null, email, status: "PENDING",
         licenseExpiry: g("licenseExpiry") ? new Date(g("licenseExpiry")) : null,
         countries: g("countries") ? g("countries").split(",").map((c) => c.trim()).filter(Boolean) : [],
       },
