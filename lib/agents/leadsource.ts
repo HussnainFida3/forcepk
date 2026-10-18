@@ -20,7 +20,6 @@ const COUNTRIES: Record<string, { iso: string; cities: string[] }> = {
   bahrain: { iso: "BH", cities: ["Manama", "Riffa", "Muharraq"] },
 };
 
-const INDUSTRY_WORDS = ["Construction", "Contracting", "Industries", "Engineering", "Facilities", "Trading", "Logistics", "Oilfield", "Steel", "Electro-Mechanical"];
 const FIRST = ["Ahmed", "Mohammed", "Khalid", "Omar", "Faisal", "Yousef", "Sultan", "Abdullah", "Hassan", "Tariq"];
 const LAST = ["Al-Saud", "Al-Rashid", "Al-Otaibi", "Al-Qahtani", "Al-Harbi", "Al-Dossari", "Al-Shammari", "Al-Ghamdi"];
 
@@ -76,23 +75,6 @@ out center ${Math.min(Math.max(want * 4, 60), 400)};`;
   }
 }
 
-function generatedBusinesses(region: { label: string; cities: string[] }, n: number, seed: number): RawBiz[] {
-  const out: RawBiz[] = [];
-  for (let i = 0; i < n; i++) {
-    const k = seed + i;
-    const city = region.cities[k % region.cities.length];
-    const word = INDUSTRY_WORDS[k % INDUSTRY_WORDS.length];
-    const name = `${["Gulf", "Al Rajhi", "Nesma", "Zamil", "Arabian", "United", "Saudi", "National", "Modern", "Prime"][k % 10]} ${word} ${1000 + k}`;
-    out.push({
-      name,
-      city,
-      phone: `+${region.label.toLowerCase().includes("saudi") ? "966" : "9"}5${String(10000000 + k * 7).slice(0, 8)}`,
-      website: undefined,
-    });
-  }
-  return out;
-}
-
 /**
  * Collect up to `limit` NEW leads for a region, skipping companies already in
  * the Lead table. Returns how many were inserted and the source breakdown.
@@ -114,20 +96,8 @@ export async function collectLeadsBatch(opts: { region?: string; limit?: number 
     picked.push(b);
     fromOsm++;
   }
-  // Fill remainder so an "until N" task can complete even when OSM is exhausted.
-  let generated = 0;
-  if (picked.length < limit) {
-    const need = limit - picked.length;
-    const gen = generatedBusinesses(region, need * 2, existing.size);
-    for (const b of gen) {
-      if (picked.length >= limit) break;
-      const key = b.name.toLowerCase();
-      if (existing.has(key)) continue;
-      existing.add(key);
-      picked.push(b);
-      generated++;
-    }
-  }
+  // Only ever keep REAL businesses from public data — never fabricate leads.
+  const generated = 0;
 
   if (picked.length === 0) return { inserted: 0, fromOsm, generated, region: region.label };
 
