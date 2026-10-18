@@ -104,6 +104,11 @@ export default function AiAgents() {
       {/* Result */}
       {state && <AgentOutput state={state} />}
 
+      <a href="/admin/leads" className="flex items-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-4 py-3 text-sm font-medium text-navy/80 transition hover:bg-brand/10">
+        <Icon name="search" className="h-4 w-4 text-brand" />
+        Prefer guaranteed results? Open the <span className="font-semibold text-brand-dark">Lead Gen</span> page to scan career pages and collect leads with one click — no prompt needed — and see every scraped company & job.
+      </a>
+
       <p className="flex items-center gap-2 text-xs text-navy/40">
         <Icon name="shield" className="h-4 w-4" />
         Agents act with your admin authority and only touch this platform's data and email. The lead agent searches public business listings — it never accesses anything behind a login.

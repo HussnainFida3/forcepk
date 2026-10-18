@@ -59,6 +59,7 @@ export const navItems = [
   { label: "Partners", icon: "handshake", href: "/admin/oeps" },
   { label: "Candidates", icon: "users", href: "/admin/candidates" },
   { label: "Requirements", icon: "briefcase", href: "/admin/requirements" },
+  { label: "Lead Gen", icon: "search", href: "/admin/leads" },
   { label: "CRM", icon: "chat", href: "/admin/crm" },
   { label: "Replacements", icon: "shield", href: "/admin/replacements" },
   { label: "Documents", icon: "doc", href: "/admin/documents" },
