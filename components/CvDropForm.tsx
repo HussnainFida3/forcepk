@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { UploadCloud, FileText, X, ArrowRight } from "lucide-react";
-import ProfessionSelect from "@/components/ProfessionSelect";
 import { submitCvDrop } from "@/lib/mutations";
 
 export default function CvDropForm() {
@@ -48,27 +47,7 @@ export default function CvDropForm() {
         <input ref={inputRef} type="file" name="cv" accept=".pdf,.doc,.docx" required onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)} className="hidden" />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-navy/70">Full name *</span>
-          <input name="name" required placeholder="Your name" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-navy/70">Mobile / WhatsApp</span>
-          <input name="phone" placeholder="+92 300 1234567" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-navy/70">Email</span>
-          <input name="email" type="email" placeholder="you@example.com" className="rounded-lg border border-navy/15 px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20" />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-navy/70">Profession / trade</span>
-          <ProfessionSelect required={false} />
-        </label>
-      </div>
-
       <SubmitButton />
-      <p className="text-center text-xs text-navy/45">By submitting you agree ForcePK may contact you about relevant opportunities.</p>
     </form>
   );
 }

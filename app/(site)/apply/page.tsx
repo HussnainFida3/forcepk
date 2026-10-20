@@ -5,7 +5,7 @@ import CvDropForm from "@/components/CvDropForm";
 export const metadata = { title: "Upload Your CV" };
 
 const ERRORS: Record<string, string> = {
-  missing: "Please add your name and attach a CV file.",
+  missing: "Please attach a CV file.",
   type: "That file type isn't supported — upload a PDF, DOC or DOCX.",
   size: "That file is over 10 MB — please upload a smaller file.",
   upload: "Something went wrong saving your file. Please try again.",

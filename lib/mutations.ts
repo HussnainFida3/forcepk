@@ -857,9 +857,10 @@ export async function payInvoice(invoiceId: string) {
 const CV_EXT = [".pdf", ".doc", ".docx"];
 export async function submitCvDrop(formData: FormData) {
   const g = (k: string) => String(formData.get(k) ?? "").trim();
-  const name = g("name");
   const file = formData.get("cv") as File | null;
-  if (!name || !file || file.size === 0) redirect("/apply?error=missing");
+  if (!file || file.size === 0) redirect("/apply?error=missing");
+  // No form fields — label the record by the CV's own file name.
+  const name = g("name") || file!.name.replace(/\.[^.]+$/, "");
   const ext = ("." + (file!.name.split(".").pop() ?? "")).toLowerCase();
   if (!CV_EXT.includes(ext)) redirect("/apply?error=type");
   if (file!.size > 10 * 1024 * 1024) redirect("/apply?error=size");
