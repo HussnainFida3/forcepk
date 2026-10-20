@@ -852,3 +852,47 @@ export async function payInvoice(invoiceId: string) {
   const checkout = await createCheckout(invoiceId, Number(inv.amount), (inv.currency ?? "usd").toLowerCase());
   redirect(checkout.url);
 }
+
+/* ── Quick public CV drop (no account) ── */
+const CV_EXT = [".pdf", ".doc", ".docx"];
+export async function submitCvDrop(formData: FormData) {
+  const g = (k: string) => String(formData.get(k) ?? "").trim();
+  const name = g("name");
+  const file = formData.get("cv") as File | null;
+  if (!name || !file || file.size === 0) redirect("/apply?error=missing");
+  const ext = ("." + (file!.name.split(".").pop() ?? "")).toLowerCase();
+  if (!CV_EXT.includes(ext)) redirect("/apply?error=type");
+  if (file!.size > 10 * 1024 * 1024) redirect("/apply?error=size");
+
+  const buffer = Buffer.from(await file!.arrayBuffer());
+  const result = await uploadMedia(buffer, "cv-drops", file!.name);
+  if (!result.ok) redirect("/apply?error=upload");
+
+  await prisma.cvDrop.create({
+    data: {
+      name,
+      phone: g("phone") || null,
+      email: g("email") || null,
+      profession: g("profession") || null,
+      note: g("note") || null,
+      fileUrl: result.url,
+      fileName: file!.name,
+    },
+  });
+  await log("cv.drop", "CvDrop", name);
+  redirect("/apply?sent=1");
+}
+
+export async function deleteCvDrop(id: string) {
+  const u = await currentUser();
+  if (!u) throw new Error("Not authorized");
+  await prisma.cvDrop.delete({ where: { id } });
+  revalidatePath("/admin/cv-drops");
+}
+
+export async function markCvDropReviewed(id: string, reviewed: boolean) {
+  const u = await currentUser();
+  if (!u) throw new Error("Not authorized");
+  await prisma.cvDrop.update({ where: { id }, data: { reviewed } });
+  revalidatePath("/admin/cv-drops");
+}

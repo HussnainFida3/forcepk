@@ -434,6 +434,22 @@ enum LeadStage {
   LOST
 }
 
+// Quick public CV drop — candidates upload a CV with no account.
+model CvDrop {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  profession String?
+  note       String?
+  fileUrl    String
+  fileName   String?
+  reviewed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Lead {
   id        String    @id @default(cuid())
   name      String

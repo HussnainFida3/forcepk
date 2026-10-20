@@ -11,6 +11,7 @@ import { t, type Locale } from "@/lib/dict";
 const nav = [
   { href: "/", key: "nav.home" },
   { href: "/jobs", key: "nav.jobs" },
+  { href: "/apply", key: "nav.apply" },
   { href: "/employers", key: "nav.employers" },
   { href: "/partners", key: "nav.partners" },
   { href: "/about", key: "nav.about" },
