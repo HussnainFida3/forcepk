@@ -864,9 +864,18 @@ export async function submitCvDrop(formData: FormData) {
   if (!CV_EXT.includes(ext)) redirect("/apply?error=type");
   if (file!.size > 10 * 1024 * 1024) redirect("/apply?error=size");
 
-  const buffer = Buffer.from(await file!.arrayBuffer());
-  const result = await uploadMedia(buffer, "cv-drops", file!.name);
-  if (!result.ok) redirect("/apply?error=upload");
+  // Store on local disk under storage/ (served via the auth-gated /api/files
+  // route) — CVs are PII, and the Cloudinary image endpoint rejects PDFs/DOCs.
+  const safe = `${Date.now()}-${file!.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+  let fileUrl = "";
+  try {
+    const dir = path.join(process.cwd(), "storage", "cv-drops");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, safe), Buffer.from(await file!.arrayBuffer()));
+    fileUrl = `/api/files/cv-drops/${safe}`;
+  } catch {
+    redirect("/apply?error=upload");
+  }
 
   await prisma.cvDrop.create({
     data: {
@@ -875,7 +884,7 @@ export async function submitCvDrop(formData: FormData) {
       email: g("email") || null,
       profession: g("profession") || null,
       note: g("note") || null,
-      fileUrl: result.url,
+      fileUrl,
       fileName: file!.name,
     },
   });
