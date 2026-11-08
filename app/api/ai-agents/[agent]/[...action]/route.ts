@@ -5,6 +5,8 @@ import { ensureRunner } from "@/lib/agents/runner";
 import { collectLeadsBatch } from "@/lib/agents/leadsource";
 import { discoverHiringBatch } from "@/lib/agents/careerscan";
 import { prisma } from "@/lib/prisma";
+import { agentRecords } from "@/lib/agents/records";
+import { agentCrud, agentSendEmail, agentSendWhatsApp, agentSendSMS, type CrudRequest } from "@/lib/agents/crud";
 import { json, preflight } from "@/lib/agents/http";
 
 const LEAD_STAGES = ["NEW", "CONTACTED", "MEETING", "PROPOSAL", "AGREEMENT", "WON", "LOST"] as const;
@@ -49,12 +51,28 @@ export async function GET(req: Request, { params }: Ctx) {
   if (act === "stats") return json(req, { success: true, data: agentStats(agent), meta: {} });
 
   if (act === "activity") {
-    const [logs, domain] = await Promise.all([
+    const soon = new Date(Date.now() + 24 * 3600 * 1000);
+    const [logs, domain, upcoming] = await Promise.all([
       prisma.agentActionLog.findMany({ where: { agent }, orderBy: { createdAt: "desc" }, take: 15 }),
       agentActivity(agent),
+      // What this agent has coming up in the next 24h (pending/running scheduled tasks).
+      prisma.agentTask.findMany({
+        where: { ...(agent === "ceo" ? {} : { agent }), status: { in: ["PENDING", "RUNNING"] }, nextRunAt: { lte: soon } },
+        orderBy: { nextRunAt: "asc" }, take: 20,
+      }),
     ]);
+    const upcomingRows = upcoming.map((t) => ({
+      id: `sched_${t.id}`,
+      action: `Scheduled: ${t.command}`,
+      targetType: "Scheduled",
+      targetId: t.id,
+      createdAt: (t.nextRunAt ?? new Date()).toISOString(),
+      admin: null,
+      meta: { scheduled: true, kind: t.kind, agent: t.agent },
+    }));
     const logRows = logs.map((l) => ({ id: l.id, action: `${l.action}: ${l.detail ?? ""}`.trim(), targetType: "Agent action", targetId: null, createdAt: l.createdAt.toISOString(), admin: null, meta: { ok: l.ok } }));
-    const rows = [...logRows, ...domain].slice(0, 40);
+    // Upcoming first (soonest at top), then the done activity.
+    const rows = [...upcomingRows, ...logRows, ...domain].slice(0, 50);
     return json(req, { success: true, data: rows, meta: { page: 1, pageSize: rows.length, total: rows.length, totalPages: 1 } });
   }
 
@@ -70,18 +88,30 @@ export async function GET(req: Request, { params }: Ctx) {
     const where = leadWhereFrom(url);
     const page = Math.max(parseInt(url.searchParams.get("page") ?? "1", 10) || 1, 1);
     const pageSize = Math.min(Math.max(parseInt(url.searchParams.get("pageSize") ?? "25", 10) || 25, 1), 100);
+    const sortDir = url.searchParams.get("sortDir") === "asc" ? "asc" : "desc";
+    const SORTABLE = ["company", "name", "email", "phone", "source", "stage", "createdAt"];
+    const sortBy = url.searchParams.get("sortBy");
+    const orderBy = sortBy && SORTABLE.includes(sortBy) ? { [sortBy]: sortDir } : { updatedAt: "desc" as const };
     const [total, rows, byStage, bySource] = await Promise.all([
       prisma.lead.count({ where }),
-      prisma.lead.findMany({ where, orderBy: { updatedAt: "desc" }, skip: (page - 1) * pageSize, take: pageSize, select: { id: true, name: true, company: true, email: true, phone: true, source: true, stage: true, notes: true, createdAt: true } }),
+      prisma.lead.findMany({ where, orderBy, skip: (page - 1) * pageSize, take: pageSize, select: { id: true, name: true, company: true, email: true, phone: true, source: true, stage: true, notes: true, createdAt: true } }),
       prisma.lead.groupBy({ by: ["stage"], _count: { _all: true } }),
       prisma.lead.groupBy({ by: ["source"], _count: { _all: true } }),
     ]);
-    const map = <T extends { _count?: { _all?: number } }>(arr: T[], k: keyof T) => Object.fromEntries(arr.map((r) => [String(r[k] ?? "Unknown"), r._count?._all ?? 0]));
+    const map = (arr: any[], k: string) => Object.fromEntries(arr.map((r: any) => [String(r[k] ?? "Unknown"), r._count?._all ?? 0]));
     return json(req, {
       success: true,
       data: { rows: rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })), total, page, pageSize, totalPages: Math.max(Math.ceil(total / pageSize), 1), byStage: map(byStage, "stage"), bySource: map(bySource, "source") },
       meta: { page, pageSize, total, totalPages: Math.max(Math.ceil(total / pageSize), 1) },
     });
+  }
+
+  // Real record list behind an agent's numbers (candidates, companies, …) with
+  // search, sort and pagination — so a dashboard count opens the actual rows.
+  if (act === "records") {
+    const result = await agentRecords(agent, new URL(req.url).searchParams);
+    if (!result) return json(req, { success: false, error: { message: "This agent has no record list." } }, 404);
+    return json(req, { success: true, data: result, meta: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
   }
 
   return json(req, { success: true, data: await agentSummary(agent), meta: {} });
@@ -107,13 +137,15 @@ export async function POST(req: Request, { params }: Ctx) {
     const command = typeof body?.command === "string" ? body.command : "";
     if (!command) return json(req, { success: false, error: { message: "A command is required." } }, 400);
     const kind = ["ONCE", "UNTIL", "RECURRING"].includes(body?.kind) ? body.kind : "ONCE";
+    // Optional firstRunAt (ISO) pins the first run to a wall-clock time, e.g. 9am.
+    const firstRun = typeof body?.nextRunAt === "string" ? new Date(body.nextRunAt) : null;
     const task = await prisma.agentTask.create({
       data: {
         agent: agent === "ceo" && typeof body?.agent === "string" ? body.agent : agent,
         command, kind,
         targetCount: typeof body?.targetCount === "number" ? body.targetCount : null,
         intervalSec: typeof body?.intervalSec === "number" ? body.intervalSec : null,
-        status: "PENDING", nextRunAt: new Date(),
+        status: "PENDING", nextRunAt: firstRun && !isNaN(firstRun.getTime()) ? firstRun : new Date(),
       },
     });
     return json(req, { success: true, data: task, meta: {} });
@@ -158,6 +190,43 @@ export async function POST(req: Request, { params }: Ctx) {
   if (act === "collect") {
     const r = await collectLeadsBatch({ region: str("region"), limit: typeof body?.limit === "number" ? body.limit : 25 });
     return json(req, { success: true, data: r, meta: {} });
+  }
+
+  if (act === "crud") {
+    if (!body || typeof body !== "object" || !body.op) return json(req, { success: false, error: { message: "Body must include `op` (tables|list|get|create|update|delete|count)." } }, 400);
+    try {
+      const result = await agentCrud(body as CrudRequest);
+      return json(req, { success: true, data: result, meta: {} });
+    } catch (e: any) {
+      return json(req, { success: false, error: { message: e?.message ?? "CRUD operation failed." } }, 400);
+    }
+  }
+
+  if (act === "email") {
+    try {
+      const result = await agentSendEmail(body);
+      return json(req, { success: true, data: result, meta: {} });
+    } catch (e: any) {
+      return json(req, { success: false, error: { message: e?.message ?? "Email failed." } }, 400);
+    }
+  }
+
+  if (act === "whatsapp") {
+    try {
+      const result = await agentSendWhatsApp(body);
+      return json(req, { success: true, data: result, meta: {} });
+    } catch (e: any) {
+      return json(req, { success: false, error: { message: e?.message ?? "WhatsApp failed." } }, 400);
+    }
+  }
+
+  if (act === "sms") {
+    try {
+      const result = await agentSendSMS(body);
+      return json(req, { success: true, data: result, meta: {} });
+    } catch (e: any) {
+      return json(req, { success: false, error: { message: e?.message ?? "SMS failed." } }, 400);
+    }
   }
 
   if (act === "scan") {

@@ -1,8 +1,9 @@
 import Icon from "./Icon";
 
-// Floating WhatsApp contact button, shown on every page.
 export default function WhatsAppButton() {
-  const number = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "+10000000000").replace(/[^\d]/g, "");
+  const raw = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
+  const number = raw.replace(/[^\d]/g, "");
+  if (!number || number === "10000000000") return null;
   const msg = encodeURIComponent("Hi ForcePK, I'd like to discuss a manpower requirement.");
   return (
     <a

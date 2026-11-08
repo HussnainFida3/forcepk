@@ -118,7 +118,7 @@ export default function JobSearch({ jobs, initialQuery = "" }: { jobs: readonly 
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-lg font-semibold text-navy">{j.title}</h3>
-                <span className="chip">✓ Verified Employer</span>
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Sample Listing</span>
               </div>
               <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-navy/60">
                 <span className="flex items-center gap-1"><Icon name="pin" className="h-4 w-4" />{j.city}</span>
@@ -128,7 +128,7 @@ export default function JobSearch({ jobs, initialQuery = "" }: { jobs: readonly 
               </div>
               <p className="mt-1 text-xs text-navy/40">Job ID: {j.id}</p>
             </div>
-            <Link href="/login" className="btn-primary whitespace-nowrap">Apply Now <Icon name="arrow" className="h-4 w-4" /></Link>
+            <Link href="/register" className="btn-primary whitespace-nowrap">Register to Apply <Icon name="arrow" className="h-4 w-4" /></Link>
           </div>
         ))}
       </div>

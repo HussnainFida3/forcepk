@@ -16,6 +16,7 @@ import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
 import HomeSearch from "@/components/HomeSearch";
 import RequirementForm from "@/components/RequirementForm";
 import HeroCarousel from "@/components/HeroCarousel";
+import FraudWarning from "@/components/FraudWarning";
 import { currentUser } from "@/lib/session";
 import { portalLinks } from "@/lib/portal";
 
@@ -39,7 +40,7 @@ const WHY: { Icon: LucideIcon; title: string; body: string }[] = [
   { Icon: Handshake, title: "Long-Term Partnership", body: "A continuous talent pipeline and dedicated support, not a one-off CV dump." },
 ];
 
-const STEP_ICONS: LucideIcon[] = [ClipboardList, Users, UserCheck, Plane];
+const STEP_ICONS: LucideIcon[] = [ClipboardList, ShieldCheck, Users, UserCheck, FileText, Award, CheckCircle2, Globe, Plane];
 
 export default async function Home() {
   const locale = getLocale();
@@ -75,20 +76,22 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ───────── TRUSTED BY (real company logos) ───────── */}
-      <section className="border-b border-navy/10 bg-white py-10">
-        <div className="container-fp">
-          <p className="text-center text-xs font-semibold uppercase tracking-wider text-navy/45">Trusted by leading employers worldwide</p>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            {EMPLOYER_BRANDS.map((b) => (
-              <div key={b.domain} className="flex items-center gap-2.5 rounded-xl border border-navy/10 bg-white px-3.5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <img src={brandLogo(b.domain)} alt={b.name} loading="lazy" className="h-7 w-7 shrink-0 rounded object-contain" />
-                <span className="truncate text-sm font-semibold text-navy/70">{b.name}</span>
-              </div>
-            ))}
+      {/* ───────── TRUSTED BY (real company logos — shown only when partners are onboarded) ───────── */}
+      {EMPLOYER_BRANDS.length > 0 && (
+        <section className="border-b border-navy/10 bg-white py-10">
+          <div className="container-fp">
+            <p className="text-center text-xs font-semibold uppercase tracking-wider text-navy/45">Trusted by leading employers worldwide</p>
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {EMPLOYER_BRANDS.map((b) => (
+                <div key={b.domain} className="flex items-center gap-2.5 rounded-xl border border-navy/10 bg-white px-3.5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <img src={brandLogo(b.domain)} alt={b.name} loading="lazy" className="h-7 w-7 shrink-0 rounded object-contain" />
+                  <span className="truncate text-sm font-semibold text-navy/70">{b.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ───────── SEARCH + REQUIREMENT BAND ───────── */}
       <section className="bg-navy-50 py-10">
@@ -181,7 +184,7 @@ export default async function Home() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold text-navy">{j.title}</h3>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold text-brand-dark"><CheckCircle2 className="h-3 w-3" /> Verified</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Sample Listing</span>
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-navy/60">
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{j.city}</span>
@@ -190,7 +193,7 @@ export default async function Home() {
                   </div>
                   <p className="mt-1 text-sm font-semibold text-brand-dark">{j.salary}</p>
                 </div>
-                <Link href="/jobs" className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-dark">Apply</Link>
+                <Link href={`/jobs?q=${encodeURIComponent(j.title)}`} className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-dark">View</Link>
               </div>
             ))}
           </div>
@@ -205,21 +208,25 @@ export default async function Home() {
             <span className="inline-flex items-center gap-2 rounded-full bg-navy px-4 py-2 text-xs font-semibold text-white"><Sparkles className="h-4 w-4 text-brand-light" /> AI-matched</span>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {featuredTalent.map((f) => (
-              <div key={f.name} className="card card-hover p-5">
-                <div className="flex items-start justify-between">
-                  <img src={f.photo} alt={f.name} loading="lazy" className="h-14 w-14 rounded-full object-cover ring-2 ring-brand/30" />
-                  <MatchRing value={f.match} />
+            {featuredTalent.map((f) => {
+              const initials = f.name.split(" ").map((w) => w[0]).join("");
+              return (
+                <div key={f.name} className="card card-hover p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand/10 text-lg font-bold text-brand ring-2 ring-brand/30">{initials}</div>
+                    <MatchRing value={f.match} />
+                  </div>
+                  <h3 className="mt-3 flex items-center gap-1 font-semibold text-navy">{f.name} <CheckCircle2 className="h-4 w-4 text-brand" /></h3>
+                  <p className="text-xs text-navy/55">{f.role} · {f.exp}</p>
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-navy/45"><MapPin className="h-3.5 w-3.5" />{f.city}</p>
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {f.skills.map((s) => <span key={s} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand-dark">{s}</span>)}
+                  </div>
+                  <span className="mt-2 block text-center text-[10px] font-medium text-navy/40">Sample profile</span>
+                  <Link href="/register" className="mt-1 block rounded-lg border border-navy/15 py-2 text-center text-xs font-semibold text-navy transition hover:border-brand hover:text-brand">Register to View</Link>
                 </div>
-                <h3 className="mt-3 flex items-center gap-1 font-semibold text-navy">{f.name} <CheckCircle2 className="h-4 w-4 text-brand" /></h3>
-                <p className="text-xs text-navy/55">{f.role} · {f.exp}</p>
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-navy/45"><MapPin className="h-3.5 w-3.5" />{f.city}</p>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {f.skills.map((s) => <span key={s} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand-dark">{s}</span>)}
-                </div>
-                <Link href="/employers#post" className="mt-4 block rounded-lg border border-navy/15 py-2 text-center text-xs font-semibold text-navy transition hover:border-brand hover:text-brand">View Profile</Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -227,10 +234,10 @@ export default async function Home() {
       {/* ───────── HOW IT WORKS ───────── */}
       <section id="how" className="section">
         <div className="container-fp">
-          <Heading eyebrow="Our Process" title="How ForcePK works" sub="A simple, transparent process from requirement to deployment." />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.slice(0, 4).map((s, i) => {
-              const Ic = STEP_ICONS[i % STEP_ICONS.length];
+          <Heading eyebrow="Our Process" title="How ForcePK works" sub="A simple, transparent process from requirement to deployment — every step covered." />
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {steps.map((s, i) => {
+              const Ic = STEP_ICONS[i] ?? ClipboardList;
               return (
                 <div key={s.n} className="relative card p-6">
                   <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand/10 text-brand"><Ic className="h-6 w-6" /></span>
@@ -273,21 +280,24 @@ export default async function Home() {
         <div className="container-fp">
           <Heading eyebrow="Testimonials" title="What our clients & partners say" />
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {testimonials.map((tm) => (
-              <div key={tm.name} className="card card-hover p-6">
-                <div className="flex gap-0.5 text-brand">
-                  {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="mt-4 text-sm text-navy/75">&ldquo;{tm.quote}&rdquo;</p>
-                <div className="mt-5 flex items-center gap-3">
-                  <img src={tm.avatar} alt={tm.name} loading="lazy" className="h-11 w-11 rounded-full object-cover ring-2 ring-brand/20" />
-                  <div>
-                    <div className="text-sm font-semibold text-navy">{tm.name}</div>
-                    <div className="text-xs text-navy/55">{tm.role}</div>
+            {testimonials.map((tm) => {
+              const initials = tm.name.split(" ").map((w) => w[0]).join("");
+              return (
+                <div key={tm.name} className="card card-hover p-6">
+                  <div className="flex gap-0.5 text-brand">
+                    {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+                  </div>
+                  <p className="mt-4 text-sm text-navy/75">&ldquo;{tm.quote}&rdquo;</p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand/10 text-sm font-bold text-brand ring-2 ring-brand/20">{initials}</div>
+                    <div>
+                      <div className="text-sm font-semibold text-navy">{tm.name}</div>
+                      <div className="text-xs text-navy/55">{tm.role}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -301,6 +311,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ───────── FRAUD WARNING ───────── */}
+      <FraudWarning />
 
       {/* ───────── CTA ───────── */}
       <section className="bg-gradient-to-r from-brand to-brand-dark">

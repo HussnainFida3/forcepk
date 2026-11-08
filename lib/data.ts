@@ -23,11 +23,11 @@ export const jobs = [
 ] as const;
 
 export const featuredTalent = [
-  { name: "Muhammad Khan", role: "Electrician", exp: "5 yrs", city: "Lahore, PK", match: 94, skills: ["Industrial", "Wiring"], photo: "https://randomuser.me/api/portraits/men/32.jpg" },
-  { name: "Usman Ali", role: "HVAC Technician", exp: "6 yrs", city: "Karachi, PK", match: 91, skills: ["Chiller", "AC"], photo: "https://randomuser.me/api/portraits/men/75.jpg" },
-  { name: "Ahmed Raza", role: "Welder (6G)", exp: "7 yrs", city: "Faisalabad, PK", match: 88, skills: ["TIG", "MIG"], photo: "https://randomuser.me/api/portraits/men/51.jpg" },
-  { name: "Sajid Hussain", role: "Heavy Equipment", exp: "8 yrs", city: "Multan, PK", match: 86, skills: ["Crane", "Loader"], photo: "https://randomuser.me/api/portraits/men/85.jpg" },
-  { name: "Bilal Ahmed", role: "Heavy Driver", exp: "6 yrs", city: "Rawalpindi, PK", match: 85, skills: ["Trailer", "Bus"], photo: "https://randomuser.me/api/portraits/men/44.jpg" },
+  { name: "Muhammad K.", role: "Electrician", exp: "5 yrs", city: "Lahore, PK", match: 94, skills: ["Industrial", "Wiring"] },
+  { name: "Usman A.", role: "HVAC Technician", exp: "6 yrs", city: "Karachi, PK", match: 91, skills: ["Chiller", "AC"] },
+  { name: "Ahmed R.", role: "Welder (6G)", exp: "7 yrs", city: "Faisalabad, PK", match: 88, skills: ["TIG", "MIG"] },
+  { name: "Sajid H.", role: "Heavy Equipment", exp: "8 yrs", city: "Multan, PK", match: 86, skills: ["Crane", "Loader"] },
+  { name: "Bilal A.", role: "Heavy Driver", exp: "6 yrs", city: "Rawalpindi, PK", match: 85, skills: ["Trailer", "Bus"] },
 ] as const;
 
 export const brands = ["Atlas Group", "Vertex Industries", "Summit Facilities", "Orion Logistics", "Delta Construction", "Zenith Corp", "Pioneer MEP", "Global Works"] as const;
@@ -57,21 +57,18 @@ export const testimonials = [
       "ForcePK helped us source qualified technical manpower across borders efficiently. The process was smooth, professional and reliable.",
     name: "Ahmad Al-Fahad",
     role: "HR Manager — Dubai, UAE",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
   },
   {
     quote:
       "Excellent platform with high-quality candidates and great support throughout the process. Highly recommended.",
     name: "Sarah Thompson",
     role: "Operations Manager — Toronto, Canada",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
   },
   {
     quote:
       "Working with ForcePK opened new global opportunities for our candidates. The platform is easy to use and professional.",
     name: "Muhammad Bilal",
     role: "Recruitment Partner — Lahore, Pakistan",
-    avatar: "https://randomuser.me/api/portraits/men/22.jpg",
   },
 ] as const;
 
@@ -99,5 +96,17 @@ export const faqs = [
   {
     q: "Does ForcePK provide a replacement policy?",
     a: "Replacement terms are agreed individually with each employer before recruitment begins — covering the period, conditions and number of replacements — rather than a blanket guarantee.",
+  },
+  {
+    q: "Is ForcePK a licensed recruiter?",
+    a: "ForcePK works with licensed Overseas Employment Promoters (OEPs) registered with Pakistan's Bureau of Emigration & Overseas Employment (BE&OE). Every overseas job posted on the platform carries a valid OEP licence number and BE&OE permission number so candidates can verify it independently.",
+  },
+  {
+    q: "Do candidates pay a fee?",
+    a: "ForcePK never charges candidates for job placement. If anyone claiming to represent ForcePK asks for payment, do not pay — report them to us immediately at hello@forcepk.com.",
+  },
+  {
+    q: "How can I verify a job is legitimate?",
+    a: "Every approved job listing on ForcePK shows the OEP licence number and BE&OE permission number. You can verify these at the Bureau of Emigration & Overseas Employment's official portal or by contacting the Protector of Emigrants office.",
   },
 ] as const;

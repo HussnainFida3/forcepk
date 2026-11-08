@@ -754,6 +754,9 @@ export async function updateRequirement(requirementId: string, formData: FormDat
       skills: csv(formData, "skills"),
       priority: (str(formData, "priority") ?? "NORMAL") as never,
       status: (str(formData, "status") ?? "OPEN") as never,
+      beoePermissionNo: str(formData, "beoePermissionNo") || null,
+      beoePermissionDate: str(formData, "beoePermissionDate") ? new Date(String(formData.get("beoePermissionDate"))) : null,
+      isPublished: str(formData, "beoePermissionNo") ? formData.get("isPublished") === "true" : false,
     },
   });
   await log("requirement.update", "Requirement", requirementId);

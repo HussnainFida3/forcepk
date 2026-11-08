@@ -288,6 +288,9 @@ model Requirement {
   expiryDate       DateTime?
   interviewMethod  String?
   specialNotes     String?
+  beoePermissionNo String?
+  beoePermissionDate DateTime?
+  isPublished      Boolean           @default(false)
   status           RequirementStatus @default(DRAFT)
   priority         Priority          @default(NORMAL)
   createdAt        DateTime          @default(now())
@@ -572,4 +575,35 @@ model DiscoveredJob {
   createdAt  DateTime      @default(now())
 
   @@index([companyRef])
+}
+
+// ── WhatsApp Business (Cloud API) messages — inbound + outbound, for the
+// admin inbox at /admin/whatsapp. Populated by the webhook (/api/whatsapp/webhook)
+// and the send action. No message is fabricated; everything here is real traffic.
+model WhatsAppMessage {
+  id          String   @id @default(cuid())
+  waId        String   // the contact's phone in E.164 digits (no +)
+  direction   String   // "IN" (from customer) | "OUT" (from us)
+  body        String
+  messageId   String?  @unique // WhatsApp's own message id (wamid…)
+  status      String?  // for OUT: sent | delivered | read | failed
+  contactName String?
+  createdAt   DateTime @default(now())
+
+  @@index([waId, createdAt])
+}
+
+// ── Candidate CV drops from the public /apply page (restored: this model
+// already exists in the live DB). Candidates upload a CV; admins review it.
+model CvDrop {
+  id         String   @id @default(cuid())
+  name       String
+  phone      String?
+  email      String?
+  profession String?
+  note       String?
+  fileUrl    String
+  fileName   String?
+  reviewed   Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }

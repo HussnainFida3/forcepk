@@ -58,6 +58,20 @@ export default async function RequirementDetail({ params, searchParams }: { para
               <select name="status" defaultValue={r.status} className="mt-1 w-full rounded-lg border border-navy/15 bg-white px-3 py-2 text-sm outline-none focus:border-brand">{REQ_STATUS.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}</select>
             </label>
           </div>
+
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+            <h3 className="text-sm font-bold text-amber-900">BE&OE Compliance</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {field("BE&OE Permission No.", "beoePermissionNo", (r as any).beoePermissionNo)}
+              {field("Permission Date", "beoePermissionDate", (r as any).beoePermissionDate ? new Date((r as any).beoePermissionDate).toISOString().slice(0, 10) : "", "date")}
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="isPublished" value="true" defaultChecked={(r as any).isPublished ?? false} className="h-4 w-4 rounded border-navy/30 text-brand focus:ring-brand" />
+              <span className="font-medium text-amber-900">Publish to public job board</span>
+            </label>
+            <p className="text-xs text-amber-700">A requirement cannot be published without a valid BE&OE permission number.</p>
+          </div>
+
           <label className="block">
             <span className="text-xs font-medium text-navy/55">Skills (comma-separated)</span>
             <input name="skills" defaultValue={r.skills.join(", ")} className="mt-1 w-full rounded-lg border border-navy/15 px-3 py-2 text-sm outline-none focus:border-brand" />
