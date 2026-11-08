@@ -593,17 +593,3 @@ model WhatsAppMessage {
   @@index([waId, createdAt])
 }
 
-// ── Candidate CV drops from the public /apply page (restored: this model
-// already exists in the live DB). Candidates upload a CV; admins review it.
-model CvDrop {
-  id         String   @id @default(cuid())
-  name       String
-  phone      String?
-  email      String?
-  profession String?
-  note       String?
-  fileUrl    String
-  fileName   String?
-  reviewed   Boolean  @default(false)
-  createdAt  DateTime @default(now())
-}
