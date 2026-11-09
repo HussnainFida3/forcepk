@@ -13,7 +13,6 @@ type Dict = Record<string, { en: string; ar: string; ur: string }>;
 
 export const dict: Dict = {
   "nav.home": { en: "Home", ar: "الرئيسية", ur: "ہوم" },
-  "nav.jobs": { en: "Find Jobs", ar: "الوظائف", ur: "ملازمتیں" },
   "nav.how": { en: "How It Works", ar: "كيف يعمل", ur: "طریقہ کار" },
   "nav.employers": { en: "Employers", ar: "أصحاب العمل", ur: "آجر" },
   "nav.oep": { en: "OEP Partners", ar: "شركاء OEP", ur: "OEP شراکت دار" },
