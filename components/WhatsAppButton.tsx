@@ -1,9 +1,9 @@
 import Icon from "./Icon";
 
 export default function WhatsAppButton() {
-  const raw = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "";
+  const raw = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+923060662200";
   const number = raw.replace(/[^\d]/g, "");
-  if (!number || number === "10000000000") return null;
+  if (!number) return null;
   const msg = encodeURIComponent("Hi ForcePK, I'd like to discuss a manpower requirement.");
   return (
     <a
