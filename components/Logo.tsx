@@ -4,7 +4,7 @@ export default function Logo({ light = false }: { light?: boolean }) {
   return (
     <Link href="/" className="inline-flex items-center gap-2" aria-label="ForcePK home">
       <img
-        src="/logo.png"
+        src="/logo.jpg"
         alt="ForcePK"
         className={`h-12 w-12 shrink-0 object-contain ${light ? "rounded-lg bg-white p-1" : ""}`}
       />

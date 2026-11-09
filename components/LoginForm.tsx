@@ -8,13 +8,6 @@ import Icon from "@/components/Icon";
 import PasswordInput from "@/components/PasswordInput";
 import { authenticate, signInGoogle } from "@/app/(site)/login/actions";
 
-const demo = [
-  ["owner@forcepk.com", "Super Admin"],
-  ["employer@abctrading.sa", "Employer"],
-  ["partner@abcrecruit.pk", "OEP Partner"],
-  ["candidate@forcepk.com", "Candidate"],
-];
-
 export default function LoginForm({ googleEnabled }: { googleEnabled: boolean }) {
   return <Suspense><LoginInner googleEnabled={googleEnabled} /></Suspense>;
 }
@@ -32,10 +25,8 @@ function LoginInner({ googleEnabled }: { googleEnabled: boolean }) {
           <p className="mt-3 max-w-sm text-white/70">Log in to manage your requirements, candidates and recruitment pipeline.</p>
         </div>
         <div className="relative rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
-          <p className="font-semibold text-brand-light">Demo accounts (password: Password123)</p>
-          <ul className="mt-2 space-y-1 text-white/70">
-            {demo.map(([e, r]) => <li key={e}><span className="text-white">{e}</span> — {r}</li>)}
-          </ul>
+          <p className="font-semibold text-brand-light">Your Workforce Requirement.</p>
+          <p className="mt-1 text-white/70">Our Recruitment Pipeline.</p>
         </div>
       </div>
 

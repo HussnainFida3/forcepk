@@ -40,7 +40,7 @@ export default function DashboardShell({ nav, tag, user, search, searchHref, unr
       >
         {/* Brand */}
         <Link href={rootHref} className="flex h-16 shrink-0 items-center gap-2.5 border-b border-white/10 px-5" onClick={() => setOpen(false)}>
-          <img src="/logo.png" alt="ForcePK" className="h-9 w-9 shrink-0 rounded-lg bg-white object-contain p-1" />
+          <img src="/logo.jpg" alt="ForcePK" className="h-9 w-9 shrink-0 rounded-lg bg-white object-contain p-1" />
           <div className="leading-none">
             <div className="text-sm font-extrabold">
               FORCE<span className="text-brand-light">PK</span>
