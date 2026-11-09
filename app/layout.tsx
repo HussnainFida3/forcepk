@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Sora } from "next/font/google";
 import "./globals.css";
 import { getLocale, dirFor } from "@/lib/i18n";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import ChatBot from "@/components/ChatBot";
 import CookieConsent from "@/components/CookieConsent";
 
 // Body: Plus Jakarta Sans (smooth, modern, highly readable).
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>{children}<WhatsAppButton /><CookieConsent /></body>
+      <body>{children}<ChatBot /><WhatsAppButton /><CookieConsent /></body>
     </html>
   );
 }
