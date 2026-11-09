@@ -167,6 +167,152 @@ h1, h2, h3, .font-display {
   color: #dbe8f2;
 }
 
+/* Codex: Registration form page */
+.form-shell { max-width: 780px; margin: 0 auto; }
+.codex-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--accent, var(--navy));
+  border-radius: 7px 7px 50% 50% / 7px 7px 7% 7%;
+  min-height: 174px;
+  padding: 23px 7%;
+  color: white;
+}
+.codex-banner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, var(--accent) 0%, var(--accent) 38%, transparent 66%),
+    var(--photo) right center / auto 100% no-repeat;
+}
+.codex-banner h1 { color: #fff; font-size: 31px; line-height: 1.02; margin-bottom: 10px; }
+.codex-banner p { font-size: 14px; max-width: 255px; }
+
+.codex-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  list-style: none;
+  margin: 10px 0 12px;
+  padding: 0;
+  text-align: center;
+  font-size: 11px;
+}
+.codex-progress li { position: relative; }
+.codex-progress li + li::before {
+  content: "";
+  height: 1px;
+  background: #c9d2dc;
+  position: absolute;
+  top: 12px;
+  right: 61%;
+  width: 77%;
+}
+.codex-progress b {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  background: #e9edf0;
+}
+.codex-progress li:first-child b {
+  background: var(--accent, var(--navy));
+  color: white;
+}
+
+.codex-form {
+  background: #fff;
+  border-radius: 10px;
+  margin: 0 12px 15px;
+  padding: 0 19px 12px;
+}
+.codex-fieldset {
+  border: 0;
+  border-bottom: 1px solid #edf0f2;
+  margin: 0;
+  padding: 10px 0 13px;
+}
+.codex-fieldset h2 {
+  font-size: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.codex-fieldset h2 svg { width: 1.2em; height: 1.2em; color: var(--accent, var(--navy)); }
+.codex-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.codex-field { display: grid; gap: 4px; font-size: 11px; }
+.codex-field.wide { grid-column: 1 / -1; }
+.codex-field span { color: var(--navy); font-weight: 600; }
+.codex-field small { color: #5e6b7b; }
+.codex-field strong { color: #bf2447; }
+.codex-field input,
+.codex-field select,
+.codex-field textarea {
+  width: 100%;
+  border: 1px solid #dce3e8;
+  border-radius: 4px;
+  background: #fcfdfe;
+  padding: 7px 9px;
+  color: var(--ink);
+  font-size: 12px;
+  min-width: 0;
+}
+.codex-field textarea { min-height: 74px; resize: vertical; }
+.codex-field input:focus,
+.codex-field select:focus,
+.codex-field textarea:focus {
+  outline: 2px solid #178bcc;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.codex-form-submit {
+  width: 100%;
+  font-size: 14px;
+  margin-top: 10px;
+  padding: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent, var(--navy));
+  color: white;
+  border: 0;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.codex-form-submit:hover { filter: brightness(1.08); }
+.codex-form-note {
+  font-size: 11px;
+  text-align: center;
+  margin: 8px auto 0;
+  color: #5e6b7b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.codex-form-note svg { color: var(--accent, var(--navy)); width: 1.2em; height: 1.2em; }
+
+@media (max-width: 510px) {
+  .codex-banner::before {
+    background:
+      linear-gradient(90deg, var(--accent) 12%, var(--accent) 26%, transparent 100%),
+      var(--photo) right center / auto 100% no-repeat;
+  }
+  .codex-field-grid { grid-template-columns: 1fr; }
+}
+
 /* Codex: Role accent colors */
 .role-employer { --accent: var(--navy); }
 .role-oep { --accent: var(--teal); }

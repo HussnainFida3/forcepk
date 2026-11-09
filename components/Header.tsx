@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import Logo from "./Logo";
-import Icon from "./Icon";
-import LangSwitcher from "./LangSwitcher";
 import ThemeToggle from "./ThemeToggle";
+import LangSwitcher from "./LangSwitcher";
 import { t, type Locale } from "@/lib/dict";
 
 const nav = [
@@ -21,29 +20,29 @@ const nav = [
 export default function Header({ locale = "en" as Locale }: { locale?: Locale }) {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-50 border-b border-navy/10 bg-white/90 backdrop-blur">
-      <div className="container-fp flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white shadow-sm">
+      <div className="container-fp flex h-14 items-center justify-between gap-4">
         <Logo />
-        <nav className="hidden items-center gap-7 lg:flex">
+
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-5 lg:flex">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="text-sm font-medium text-navy/80 transition hover:text-brand">
+            <Link key={n.href} href={n.href} className="text-[11px] font-medium text-ink/80 transition hover:text-brand whitespace-nowrap">
               {t(n.key, locale)}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 lg:flex">
+
+        {/* Desktop right side */}
+        <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
           <LangSwitcher current={locale} />
-          <Link href="/login" className="text-sm font-semibold text-navy hover:text-brand">
-            {t("nav.login", locale)}
-          </Link>
-          <Link href="/register" className="btn-outline">
-            {t("nav.signup", locale)}
-          </Link>
-          <Link href="/employers#post" className="btn-primary">
-            {t("nav.post", locale)}
+          <Link href="/login" className="rounded border border-[#8fa4b7] px-3.5 py-1.5 text-[11px] font-semibold text-navy transition hover:border-brand hover:text-brand">
+            Sign In
           </Link>
         </div>
+
+        {/* Mobile toggle */}
         <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle />
           <button onClick={() => setOpen(!open)} className="grid h-9 w-9 place-items-center rounded-lg text-navy" aria-label="Menu" aria-expanded={open}>
@@ -53,6 +52,8 @@ export default function Header({ locale = "en" as Locale }: { locale?: Locale })
           </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
       {open && (
         <div className="border-t border-navy/10 bg-white lg:hidden">
           <div className="container-fp flex flex-col gap-1 py-3">
@@ -63,16 +64,9 @@ export default function Header({ locale = "en" as Locale }: { locale?: Locale })
               </Link>
             ))}
             <div className="px-3 py-2"><LangSwitcher current={locale} /></div>
-            <div className="mt-1 grid grid-cols-2 gap-2 border-t border-navy/10 pt-3">
-              <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg border border-navy/15 px-3 py-2.5 text-center text-sm font-semibold text-navy hover:border-brand hover:text-brand">
-                {t("nav.login", locale)}
-              </Link>
-              <Link href="/register" onClick={() => setOpen(false)} className="rounded-lg border border-navy/15 px-3 py-2.5 text-center text-sm font-semibold text-navy hover:border-brand hover:text-brand">
-                {t("nav.signup", locale)}
-              </Link>
-            </div>
-            <Link href="/employers#post" onClick={() => setOpen(false)} className="btn-primary mt-2 w-full">
-              {t("nav.post", locale)}
+            <Link href="/login" onClick={() => setOpen(false)}
+              className="mt-1 rounded-md border border-[#8fa4b7] px-4 py-2.5 text-center text-sm font-semibold text-navy hover:border-brand hover:text-brand">
+              Sign In
             </Link>
           </div>
         </div>
