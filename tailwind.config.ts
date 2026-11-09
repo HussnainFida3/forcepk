@@ -7,17 +7,27 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          DEFAULT: "#0C2340",
-          50: "#eef2f7",
-          700: "#102a4c",
-          800: "#0C2340",
-          900: "#081a30",
+          DEFAULT: "#082952",
+          50: "#f1f7fa",
+          100: "#e6f1f5",
+          700: "#062b56",
+          800: "#082952",
+          900: "#052640",
+          950: "#032239",
         },
         brand: {
-          DEFAULT: "#16A34A",
-          light: "#22c55e",
-          dark: "#12833c",
+          DEFAULT: "#008e8c",
+          light: "#38d1ca",
+          dark: "#007a78",
         },
+        accent: {
+          blue: "#0968bd",
+          teal: "#008e8c",
+          navy: "#062b56",
+        },
+        ink: "#101f37",
+        pale: "#f1f7fa",
+        line: "#dce6eb",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

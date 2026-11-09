@@ -4,6 +4,12 @@
 
 :root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --navy: #082952;
+  --teal: #008e8c;
+  --blue: #0968bd;
+  --ink: #101f37;
+  --pale: #f1f7fa;
+  --line: #dce6eb;
 }
 
 html {
@@ -55,6 +61,125 @@ h1, h2, h3, .font-display {
     @apply transition duration-300 hover:-translate-y-1 hover:shadow-xl;
   }
 }
+
+/* ── Codex: Hero with bg image + gradient overlay + curved bottom ── */
+.hero-codex {
+  position: relative;
+  min-height: 320px;
+  background: #052640;
+  isolation: isolate;
+  color: white;
+  border-radius: 0 0 50% 50% / 0 0 8% 8%;
+  overflow: hidden;
+}
+.hero-codex::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/assets/hero.webp') center top / cover no-repeat;
+}
+.hero-codex h1 { color: #fff; }
+.hero-codex h1 span { color: #38d1ca; }
+
+/* Codex: Registration cards overlap hero */
+.reg-overlap {
+  position: relative;
+  margin-top: -60px;
+  z-index: 10;
+}
+
+/* Codex: Feature band */
+.band { background: #e6f1f5; }
+
+/* Codex: Step connector arrows */
+.step-arrow::after {
+  content: '\27F6';
+  color: #a2b3bd;
+  position: absolute;
+  right: -18px;
+  top: 10px;
+  font-size: 18px;
+}
+
+/* Codex: Category card */
+.cat-card {
+  @apply flex flex-col items-center justify-center gap-2 rounded-md bg-white text-center;
+  border: 1px solid #e3ebef;
+  padding: 14px 8px;
+  min-height: 95px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--navy);
+}
+.cat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.cat-card svg { color: var(--blue); width: 30px; height: 30px; }
+
+/* Codex: Audience cards with colored top border */
+.audience-card { border-top: 5px solid var(--accent, var(--navy)); }
+
+/* Codex: CTA section */
+.cta-codex {
+  position: relative;
+  isolation: isolate;
+  background: #062942;
+  color: white;
+  padding: 24px 0;
+}
+.cta-codex::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.75;
+  background: linear-gradient(90deg, #052640 10%, rgba(5,38,64,0.52) 55%, rgba(5,38,64,0.25)),
+              url('/assets/city.webp') right center / auto 100% no-repeat;
+}
+.cta-codex h2 { color: white; }
+
+/* Codex: FAQ details */
+.faq-codex {
+  border: 1px solid #e0e6ea;
+  border-radius: 6px;
+  background: #fff;
+  padding: 12px 16px;
+}
+.faq-codex summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--navy);
+  font-size: 14px;
+}
+.faq-codex summary::-webkit-details-marker { display: none; }
+.faq-codex summary::after { content: '+'; font-size: 20px; color: #8fa4b7; }
+.faq-codex[open] summary::after { content: '\2212'; }
+.faq-codex p { margin-top: 8px; font-size: 13px; color: #5e6b7b; }
+
+/* Codex: Footer */
+.footer-codex {
+  background: #032239;
+  color: #dbe8f2;
+}
+
+/* Codex: Role accent colors */
+.role-employer { --accent: var(--navy); }
+.role-oep { --accent: var(--teal); }
+.role-candidate { --accent: var(--blue); }
+
+/* Codex: Badge circles */
+.badge-codex {
+  @apply inline-grid place-items-center rounded-full text-white;
+  width: 48px; height: 48px;
+  background: var(--accent, var(--navy));
+}
+.badge-codex.sm { width: 36px; height: 36px; }
+.badge-codex.lg { width: 54px; height: 54px; }
 
 /* ───────────────────────────────────────────────────────────────
    Dark mode. The app uses hardcoded navy/white utilities, so instead

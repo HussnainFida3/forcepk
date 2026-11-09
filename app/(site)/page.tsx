@@ -1,345 +1,278 @@
 import Link from "next/link";
 import {
-  ShieldCheck, Users, FileText, CheckCircle2, ArrowRight, MapPin, Briefcase, Star,
-  Building2, Award, Handshake, Globe, Sparkles, UserCheck, ClipboardList, Plane,
-  HardHat, Zap, Wind, Flame, Truck, Ruler, Factory, Stethoscope, Wrench, Search, Clock,
-  type LucideIcon,
+  Building2, Users, UserCheck, ShieldCheck, FileText, ClipboardList,
+  BarChart3, MessageCircle, Handshake, CheckCircle2, ArrowRight,
+  HardHat, Zap, Wind, Flame, Truck, Wrench, Briefcase, Heart,
+  Monitor, Package, type LucideIcon,
 } from "lucide-react";
-import Faq from "@/components/Faq";
-import AnimatedNumber from "@/components/ui/AnimatedNumber";
-import MatchRing from "@/components/ui/MatchRing";
-import { Sparkline } from "@/components/ui/charts";
-import { categories, jobs, steps, stats, testimonials, faqs, featuredTalent } from "@/lib/data";
-import { getLocale, t } from "@/lib/i18n";
-import { HERO, CATEGORY_IMG, jobImg } from "@/lib/images";
-import { EMPLOYER_BRANDS, brandLogo } from "@/lib/brands";
-import HomeSearch from "@/components/HomeSearch";
-import RequirementForm from "@/components/RequirementForm";
-import HeroCarousel from "@/components/HeroCarousel";
+import { faqs } from "@/lib/data";
 import FraudWarning from "@/components/FraudWarning";
-import { currentUser } from "@/lib/session";
-import { portalLinks } from "@/lib/portal";
 
-function parseStat(v: string): { n: number; suffix: string } {
-  const m = v.match(/([\d,]+)(.*)$/);
-  return m ? { n: parseInt(m[1].replace(/,/g, ""), 10), suffix: m[2] } : { n: 0, suffix: v };
-}
-
-const CAT_ICON: Record<string, LucideIcon> = {
-  Construction: HardHat, Electrical: Zap, HVAC: Wind, Welding: Flame,
-  "Heavy Equipment": Truck, Drivers: Truck, Engineering: Ruler, Industrial: Factory,
-  Healthcare: Stethoscope, Facilities: Wrench,
-};
-
-const WHY: { Icon: LucideIcon; title: string; body: string }[] = [
-  { Icon: ShieldCheck, title: "100% Verified Candidates", body: "Every worker is background-checked, skill-tested and document-verified before deployment." },
-  { Icon: UserCheck, title: "Employer-Specific Screening", body: "We match candidates to your exact role and standards — not just the cheapest available." },
-  { Icon: Globe, title: "Licensed OEP Network", body: "A verified network of recruitment partners sourcing talent across 20+ countries." },
-  { Icon: ClipboardList, title: "End-to-End Documentation", body: "Visas, medicals, trade tests and attestation handled — mobilization made simple." },
-  { Icon: Sparkles, title: "AI-Powered Matching", body: "Our engine scores every candidate against your requirement for the strongest fit." },
-  { Icon: Handshake, title: "Long-Term Partnership", body: "A continuous talent pipeline and dedicated support, not a one-off CV dump." },
+/* ── Feature Band (6 tiles) ── */
+const FEATURES = [
+  { icon: FileText, title: "Employer\nRequirements", body: "Structured workforce requirements from verified employers.", accent: "#062b56" },
+  { icon: Users, title: "OEP Partnership\nNetwork", body: "Connect with licensed recruitment partners across key sectors.", accent: "#126cc1" },
+  { icon: UserCheck, title: "Candidate\nProfiles", body: "Create a professional profile and explore relevant jobs.", accent: "#075270" },
+  { icon: ShieldCheck, title: "Verification", body: "Employer, OEP and candidate verification for a trusted platform.", accent: "#008f89" },
+  { icon: Handshake, title: "Recruitment\nCoordination", body: "Facilitate communication and next steps between all parties.", accent: "#116ab8" },
+  { icon: BarChart3, title: "Progress\nTracking", body: "Track the status of requirements, applications and recruitment progress.", accent: "#009187" },
 ];
 
-const STEP_ICONS: LucideIcon[] = [ClipboardList, ShieldCheck, Users, UserCheck, FileText, Award, CheckCircle2, Globe, Plane];
+/* ── How It Works (4 steps) ── */
+const STEPS = [
+  { n: 1, title: "Register", body: "Create your account as an employer, OEP partner or candidate.", accent: "#062b56" },
+  { n: 2, title: "Submit Information", body: "Provide your requirements, organization details or candidate profile.", accent: "#008f89" },
+  { n: 3, title: "Review & Match", body: "Information is reviewed and matched with suitable opportunities.", accent: "#126cc1" },
+  { n: 4, title: "Coordinate Next Steps", body: "Connect, communicate and move forward with the recruitment process.", accent: "#009187" },
+];
+
+/* ── Categories (8 items) ── */
+const CATS: { icon: LucideIcon; name: string }[] = [
+  { icon: HardHat, name: "Construction & Engineering" },
+  { icon: Heart, name: "Healthcare & Medical" },
+  { icon: Monitor, name: "IT & Technology" },
+  { icon: Briefcase, name: "Hospitality & Tourism" },
+  { icon: Package, name: "Manufacturing & Production" },
+  { icon: Truck, name: "Transport & Logistics" },
+  { icon: Wrench, name: "Skilled Trades" },
+  { icon: Users, name: "Administration & Office Support" },
+];
+
+/* ── Audience cards ── */
+const AUDIENCE = [
+  {
+    role: "employer" as const, title: "For Employers", img: "/assets/employers.webp",
+    desc: "Find the right recruitment partners to meet your workforce needs.",
+    bullets: ["Submit and manage workforce requirements", "Connect with verified OEP partners", "Track requirement status and progress", "Dedicated support and coordination"],
+    link: { label: "Learn more about employer registration →", href: "/employers" },
+  },
+  {
+    role: "oep" as const, title: "For OEP Partners", img: "/assets/partners.webp",
+    desc: "Showcase your licensed organization and recruitment capabilities.",
+    bullets: ["Register your OEP licence details", "Highlight your recruitment capabilities", "Explore relevant employer requirements", "Build long-term partnerships"],
+    link: { label: "Learn more about OEP registration →", href: "/partners" },
+  },
+  {
+    role: "candidate" as const, title: "For Job Seekers", img: "/assets/seekers.webp",
+    desc: "Create your profile and explore relevant opportunities.",
+    bullets: ["Create a professional profile", "Upload and manage your CV", "Explore relevant job opportunities", "Keep your information secure and private"],
+    link: { label: "Learn more about candidate registration →", href: "/register" },
+  },
+];
+
+/* ── Why Choose ForcePK (5 tiles) ── */
+const WHY = [
+  { icon: ClipboardList, title: "Structured Coordination", body: "A clear and organized process for all users.", accent: "#062b56" },
+  { icon: Handshake, title: "Partner Network", body: "Work with verified and licensed OEP partners.", accent: "#126cc1" },
+  { icon: FileText, title: "Organized Profiles", body: "Well-structured candidate and job information.", accent: "#075270" },
+  { icon: BarChart3, title: "Transparent Workflows", body: "Track progress with full visibility.", accent: "#008f89" },
+  { icon: MessageCircle, title: "Clear Communication", body: "Stay connected with real-time updates.", accent: "#116ab8" },
+];
+
+const ROLE_COLORS = { employer: "#082952", oep: "#008e8c", candidate: "#0968bd" } as const;
 
 export default async function Home() {
-  const locale = getLocale();
-  const u = await currentUser();
-  const p = portalLinks(u?.role);
-  const portals = [
-    { ...p.employer, img: HERO.heroEmployers, Icon: Building2, tag: "For Employers", title: "Hire manpower", desc: "Post requirements and manage your hiring pipeline." },
-    { ...p.candidate, img: HERO.heroJobs, Icon: Users, tag: "For Candidates", title: "Find work abroad", desc: "Browse verified vacancies and apply in one click." },
-    { ...p.partner, img: HERO.heroPartners, Icon: Handshake, tag: "For OEP Partners", title: "Recruit & earn", desc: "Submit candidates and earn on every deployment." },
-  ];
   return (
     <>
-      {/* ───────── HERO ───────── */}
-      <HeroCarousel />
+      {/* ── HERO (static, curved bottom, bg image) ── */}
+      <section className="hero-codex">
+        <div className="container-fp" style={{ padding: "48px 0 100px", width: "min(88.3%, 1140px)", margin: "0 auto" }}>
+          <h1 className="text-[clamp(26px,4vw,48px)] font-bold leading-[1.05]">
+            Connecting Employers,<br />
+            Recruitment Partners<br />
+            <span>& Job Seekers</span>
+          </h1>
+          <p className="mt-3 text-base leading-relaxed text-white/90 max-w-md">
+            Your workforce requirements. Our recruitment network.<br />
+            A clearer path to opportunity.
+          </p>
+        </div>
+      </section>
 
-      {/* ───────── PORTAL ENTRY BOXES ───────── */}
-      <section className="bg-white py-10">
-        <div className="container-fp grid gap-5 sm:grid-cols-3">
-          {portals.map((b) => (
-            <Link key={b.tag} href={b.href} className="group relative block h-44 overflow-hidden rounded-2xl shadow-sm ring-1 ring-navy/5 transition hover:-translate-y-1 hover:shadow-xl">
-              <img src={b.img} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110" />
-              <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/55 to-navy/20" />
-              <div className="relative flex h-full flex-col justify-end p-5">
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur"><b.Icon className="h-3.5 w-3.5" /> {b.tag}</span>
-                <h3 className="mt-2 text-lg font-bold text-white">{b.title}</h3>
-                <p className="text-xs text-white/70">{b.desc}</p>
-                <span className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-brand-light">
-                  {b.own ? "Open portal" : "Create account"} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+      {/* ── REGISTRATION CARDS (overlapping hero) ── */}
+      <section className="reg-overlap" style={{ width: "min(92%, 1140px)", margin: "-60px auto 0" }}>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {([
+            { role: "employer" as const, Icon: Building2, title: "Register as an Employer", desc: "Submit your company's workforce requirements and connect with suitable recruitment partners.", btn: "Register as an Employer", href: "/employer/register" },
+            { role: "oep" as const, Icon: Users, title: "Register as an OEP Partner", desc: "Register your licensed organization, share recruitment capabilities and explore relevant employer requirements.", btn: "Register as an OEP", href: "/partner/register" },
+            { role: "candidate" as const, Icon: UserCheck, title: "Register as a Candidate", desc: "Create your profile, upload your CV and explore relevant job opportunities.", btn: "Register as a Candidate", href: "/register" },
+          ]).map((c) => (
+            <article key={c.role} className="rounded-lg bg-white p-4 flex flex-col" style={{ boxShadow: "0 5px 20px rgba(11,40,64,0.08)" }}>
+              <div className="flex items-start gap-3 flex-1">
+                <span className="shrink-0 grid place-items-center rounded-full text-white" style={{ background: ROLE_COLORS[c.role], width: 48, height: 48 }}>
+                  <c.Icon className="h-5 w-5" />
                 </span>
+                <div>
+                  <h3 className="text-[15px] font-bold" style={{ color: "#082952" }}>{c.title}</h3>
+                  <p className="mt-1 text-[11px] leading-relaxed" style={{ color: "#5e6b7b" }}>{c.desc}</p>
+                </div>
               </div>
-            </Link>
+              <Link href={c.href} className="mt-3 flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-[11px] font-bold text-white" style={{ background: ROLE_COLORS[c.role] }}>
+                {c.btn} <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* ───────── TRUSTED BY (real company logos — shown only when partners are onboarded) ───────── */}
-      {EMPLOYER_BRANDS.length > 0 && (
-        <section className="border-b border-navy/10 bg-white py-10">
-          <div className="container-fp">
-            <p className="text-center text-xs font-semibold uppercase tracking-wider text-navy/45">Trusted by leading employers worldwide</p>
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              {EMPLOYER_BRANDS.map((b) => (
-                <div key={b.domain} className="flex items-center gap-2.5 rounded-xl border border-navy/10 bg-white px-3.5 py-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                  <img src={brandLogo(b.domain)} alt={b.name} loading="lazy" className="h-7 w-7 shrink-0 rounded object-contain" />
-                  <span className="truncate text-sm font-semibold text-navy/70">{b.name}</span>
+      {/* ── FEATURE BAND (6 tiles, single row on desktop, 3-col on mobile) ── */}
+      <section className="band mt-6">
+        <div className="container-fp grid grid-cols-2 gap-0 py-5 sm:grid-cols-3 lg:grid-cols-6">
+          {FEATURES.map((f, i) => (
+            <article key={f.title} className={`text-center px-3 py-3 ${i > 0 ? "border-l border-[#d8e6ec] max-sm:[&:nth-child(odd)]:border-l-0 sm:max-lg:[&:nth-child(3n+1)]:border-l-0" : ""}`}>
+              <span className="mx-auto inline-grid h-10 w-10 place-items-center rounded-full text-white" style={{ background: f.accent }}>
+                <f.icon className="h-4 w-4" />
+              </span>
+              <h3 className="mt-2 text-[13px] font-bold whitespace-pre-line" style={{ color: "#082952" }}>{f.title}</h3>
+              <p className="mt-1 text-[11px] leading-snug" style={{ color: "#5e6b7b" }}>{f.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section id="how" className="py-12 sm:py-16 text-center">
+        <div className="container-fp">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "#082952" }}>How It Works</h2>
+          <p className="mt-2 text-[13px]" style={{ color: "#5e6b7b" }}>A simple process for employers, recruitment partners and job seekers.</p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((s, i) => (
+              <div key={s.n} className="relative px-2 text-center">
+                <span className="mx-auto inline-grid h-11 w-11 place-items-center rounded-full text-white font-bold text-sm" style={{ background: s.accent }}>
+                  {s.n}
+                </span>
+                {i < STEPS.length - 1 && (
+                  <span className="step-arrow absolute hidden lg:block" />
+                )}
+                <h3 className="mt-3 text-[14px] font-bold" style={{ color: "#082952" }}>{s.title}</h3>
+                <p className="mx-auto mt-1 max-w-[180px] text-[12px] leading-snug" style={{ color: "#5e6b7b" }}>{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── POPULAR JOB CATEGORIES ── */}
+      <section style={{ background: "#f1f7fa", padding: "16px 0 24px" }}>
+        <div className="container-fp">
+          <div className="flex items-baseline justify-between gap-3 mb-4">
+            <h2 className="text-xl font-bold" style={{ color: "#082952" }}>Popular Job Categories</h2>
+            <Link href="/jobs" className="text-[12px] font-bold" style={{ color: "#075b9a" }}>View All Jobs &rarr;</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+            {CATS.map((c) => (
+              <Link key={c.name} href={`/jobs?category=${encodeURIComponent(c.name)}`} className="cat-card">
+                <c.icon className="h-7 w-7" />
+                <span>{c.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── AUDIENCE: FOR EMPLOYERS / OEP / CANDIDATES ── */}
+      <section className="py-12 sm:py-16">
+        <div className="container-fp grid gap-4 sm:grid-cols-3">
+          {AUDIENCE.map((a) => (
+            <article key={a.role} className="audience-card rounded-lg overflow-hidden" style={{ "--accent": ROLE_COLORS[a.role], background: "#f7f9fa" } as React.CSSProperties}>
+              <div className="grid grid-cols-[36%_1fr] gap-3 items-start p-3">
+                <img src={a.img} alt={a.title} loading="lazy" className="w-full rounded aspect-[1.08] object-cover" />
+                <div className="pt-2">
+                  <h3 className="text-[15px] font-bold" style={{ color: "#082952" }}>{a.title}</h3>
+                  <p className="mt-1 text-[12px] leading-snug" style={{ color: "#5e6b7b" }}>{a.desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+              </div>
+              <ul className="mt-1 space-y-1.5 px-[8%] pb-2">
+                {a.bullets.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-[12px]" style={{ color: "#5e6b7b" }}>
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: "#008e8c" }} />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+              <div className="px-[8%] pb-4">
+                <Link href={a.link.href} className="text-[12px] font-bold" style={{ color: "#075b9a" }}>{a.link.label}</Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      {/* ───────── SEARCH + REQUIREMENT BAND ───────── */}
-      <section className="bg-navy-50 py-10">
+      {/* ── FAQ GRID ── */}
+      <section className="py-10" style={{ background: "#fff" }}>
         <div className="container-fp">
-          <div className="card bg-white p-5 shadow-xl sm:p-6">
-            {/* Search */}
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Search className="h-5 w-5" /></span>
-              <div>
-                <h2 className="text-lg font-bold text-navy">Search jobs &amp; verified talent</h2>
-                <p className="text-sm text-navy/55">Find opportunities by profession, category or location — results update as you type.</p>
-              </div>
-            </div>
-            <div className="mt-4"><HomeSearch /></div>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-navy/50">
-              <span className="font-medium text-navy/60">Popular:</span>
-              <Link href="/jobs?q=Electrician" className="hover:text-brand">Electrician</Link>
-              <Link href="/jobs?q=Welder" className="hover:text-brand">Welder</Link>
-              <Link href="/jobs?q=HVAC" className="hover:text-brand">HVAC Technician</Link>
-              <Link href="/jobs?q=Driver" className="hover:text-brand">Driver</Link>
-            </div>
-
-            <div className="my-6 border-t border-navy/10" />
-
-            {/* Requirement form (for employers) */}
-            <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand"><Users className="h-5 w-5" /></span>
-              <div>
-                <h2 className="text-lg font-bold text-navy">Need manpower for your business?</h2>
-                <p className="text-sm text-navy/55">Tell us what workforce you need and get matched with verified global talent.</p>
-              </div>
-            </div>
-            <div className="mt-4"><RequirementForm /></div>
+          <div className="flex items-baseline justify-between gap-3 mb-4">
+            <h2 className="text-xl font-bold" style={{ color: "#082952" }}>Frequently Asked Questions</h2>
+            <Link href="/about#faq" className="text-[12px] font-bold" style={{ color: "#075b9a" }}>View all FAQs &rarr;</Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {faqs.slice(0, 4).map((f) => (
+              <details key={f.q} className="faq-codex">
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ───────── CATEGORIES ───────── */}
-      <section className="section">
+      {/* ── WHY CHOOSE FORCEPK ── */}
+      <section className="py-12 text-center" style={{ background: "#f5fafc" }}>
         <div className="container-fp">
-          <Heading eyebrow="Manpower Categories" title="Find the workforce you need" sub="Explore our top manpower categories and find the right talent for your business." />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {categories.map((c) => {
-              const Ic = CAT_ICON[c.name] ?? Building2;
-              return (
-                <Link key={c.name} href="/employers#post" className="group relative block h-44 overflow-hidden rounded-2xl shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-                  <img src={CATEGORY_IMG[c.name]} alt={c.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-4">
-                    <div className="flex items-center gap-2 text-white">
-                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand shadow-lg"><Ic className="h-4 w-4" /></span>
-                      <h3 className="font-bold leading-tight">{c.name}</h3>
-                    </div>
-                    <p className="mt-1 text-[11px] text-white/75">{c.desc}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── WHY FORCEPK ───────── */}
-      <section className="section bg-navy-50">
-        <div className="container-fp">
-          <Heading eyebrow="Why ForcePK" title="More than a supplier — your recruitment partner" sub="Verified people, AI matching and full documentation support on every placement." />
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "#082952" }}>Why Choose <span style={{ color: "#008e8c" }}>ForcePK?</span></h2>
+          <p className="mt-2 text-[13px]" style={{ color: "#5e6b7b" }}>A reliable platform built for smarter workforce coordination.</p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {WHY.map((w) => (
-              <article key={w.title} className="group card card-hover p-6">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand/10 text-brand transition group-hover:scale-110"><w.Icon className="h-6 w-6" /></span>
-                <h3 className="mt-4 text-[17px] font-bold text-navy">{w.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-navy/60">{w.body}</p>
+              <article key={w.title} className="rounded-lg border bg-[#f8fbfd] p-4 text-center" style={{ borderColor: "#dce6eb" }}>
+                <span className="mx-auto inline-grid h-10 w-10 place-items-center rounded-full text-white" style={{ background: w.accent }}>
+                  <w.icon className="h-4 w-4" />
+                </span>
+                <h3 className="mt-2 text-[13px] font-bold" style={{ color: "#082952" }}>{w.title}</h3>
+                <p className="mt-1 text-[12px] leading-snug" style={{ color: "#5e6b7b" }}>{w.body}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ───────── FEATURED JOBS ───────── */}
-      <section className="section">
-        <div className="container-fp">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <Heading eyebrow="Open Positions" title="Featured opportunities worldwide" align="left" />
-            <Link href="/jobs" className="btn-outline">View All Jobs <ArrowRight className="h-4 w-4" /></Link>
-          </div>
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {jobs.slice(0, 6).map((j) => (
-              <div key={j.id} className="card card-hover flex items-center gap-4 p-4">
-                <img src={jobImg(j.title)} alt={j.title} loading="lazy" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold text-navy">{j.title}</h3>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Sample Listing</span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-navy/60">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{j.city}</span>
-                    <span className="flex items-center gap-1"><Briefcase className="h-3.5 w-3.5" />{j.exp}</span>
-                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{j.positions}</span>
-                  </div>
-                  <p className="mt-1 text-sm font-semibold text-brand-dark">{j.salary}</p>
-                </div>
-                <Link href={`/jobs?q=${encodeURIComponent(j.title)}`} className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-dark">View</Link>
-              </div>
+      {/* ── FULL FAQ (expandable list) ── */}
+      <section className="py-12 text-center" style={{ background: "#f5fafc" }}>
+        <div className="container-fp max-w-3xl">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "#082952" }}>Frequently Asked <span style={{ color: "#008e8c" }}>Questions</span></h2>
+          <p className="mt-2 text-[13px]" style={{ color: "#5e6b7b" }}>Find quick answers to common questions about ForcePK.</p>
+          <div className="mt-6 space-y-3 text-left">
+            {faqs.map((f, i) => (
+              <details key={f.q} className="faq-codex" {...(i === 0 ? { open: true } : {})}>
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ───────── FEATURED TALENT ───────── */}
-      <section className="section bg-navy-50">
-        <div className="container-fp">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <Heading eyebrow="Featured Talent" title="Pre-screened, verified, ready to deploy" align="left" />
-            <span className="inline-flex items-center gap-2 rounded-full bg-navy px-4 py-2 text-xs font-semibold text-white"><Sparkles className="h-4 w-4 text-brand-light" /> AI-matched</span>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {featuredTalent.map((f) => {
-              const initials = f.name.split(" ").map((w) => w[0]).join("");
-              return (
-                <div key={f.name} className="card card-hover p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand/10 text-lg font-bold text-brand ring-2 ring-brand/30">{initials}</div>
-                    <MatchRing value={f.match} />
-                  </div>
-                  <h3 className="mt-3 flex items-center gap-1 font-semibold text-navy">{f.name} <CheckCircle2 className="h-4 w-4 text-brand" /></h3>
-                  <p className="text-xs text-navy/55">{f.role} · {f.exp}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-navy/45"><MapPin className="h-3.5 w-3.5" />{f.city}</p>
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {f.skills.map((s) => <span key={s} className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand-dark">{s}</span>)}
-                  </div>
-                  <span className="mt-2 block text-center text-[10px] font-medium text-navy/40">Sample profile</span>
-                  <Link href="/register" className="mt-1 block rounded-lg border border-navy/15 py-2 text-center text-xs font-semibold text-navy transition hover:border-brand hover:text-brand">Register to View</Link>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── HOW IT WORKS ───────── */}
-      <section id="how" className="section">
-        <div className="container-fp">
-          <Heading eyebrow="Our Process" title="How ForcePK works" sub="A simple, transparent process from requirement to deployment — every step covered." />
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {steps.map((s, i) => {
-              const Ic = STEP_ICONS[i] ?? ClipboardList;
-              return (
-                <div key={s.n} className="relative card p-6">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand/10 text-brand"><Ic className="h-6 w-6" /></span>
-                  <span className="absolute right-5 top-5 text-3xl font-black text-navy/10">{s.n}</span>
-                  <h3 className="mt-4 font-bold text-navy">{s.t}</h3>
-                  <p className="mt-2 text-sm text-navy/60">{s.d}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── STATS ───────── */}
-      <section className="section bg-navy-50">
-        <div className="container-fp">
-          <div className="relative overflow-hidden rounded-3xl bg-navy p-8 sm:p-12">
-            <div className="absolute inset-0 bg-[radial-gradient(50%_80%_at_50%_0%,rgba(34,197,94,0.25),transparent)]" />
-            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand/20 blur-3xl animate-blob-slow" />
-            <div className="relative grid gap-8 sm:grid-cols-4">
-              {stats.map((s, i) => {
-                const { n, suffix } = parseStat(s.value);
-                return (
-                  <div key={s.label} className="text-center">
-                    <div className="text-4xl font-extrabold text-white sm:text-5xl"><AnimatedNumber value={n} suffix={suffix} /></div>
-                    <div className="mt-1 text-sm text-white/60">{s.label}</div>
-                    <div className="mx-auto mt-3 flex justify-center">
-                      <Sparkline data={[3, 5, 4, 7, 6, 9, 8, 11].map((x) => x + i)} color="#22c55e" className="h-6 w-24" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── TESTIMONIALS ───────── */}
-      <section className="section">
-        <div className="container-fp">
-          <Heading eyebrow="Testimonials" title="What our clients & partners say" />
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {testimonials.map((tm) => {
-              const initials = tm.name.split(" ").map((w) => w[0]).join("");
-              return (
-                <div key={tm.name} className="card card-hover p-6">
-                  <div className="flex gap-0.5 text-brand">
-                    {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                  </div>
-                  <p className="mt-4 text-sm text-navy/75">&ldquo;{tm.quote}&rdquo;</p>
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand/10 text-sm font-bold text-brand ring-2 ring-brand/20">{initials}</div>
-                    <div>
-                      <div className="text-sm font-semibold text-navy">{tm.name}</div>
-                      <div className="text-xs text-navy/55">{tm.role}</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── FAQ ───────── */}
-      <section className="section bg-navy-50">
-        <div className="container-fp max-w-3xl">
-          <Heading eyebrow="FAQ" title="Frequently asked questions" />
-          <div className="mt-8 space-y-3">
-            {faqs.map((f) => <Faq key={f.q} q={f.q} a={f.a} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────── FRAUD WARNING ───────── */}
+      {/* ── FRAUD WARNING ── */}
       <FraudWarning />
 
-      {/* ───────── CTA ───────── */}
-      <section className="bg-gradient-to-r from-brand to-brand-dark">
-        <div className="container-fp flex flex-col items-center justify-between gap-6 py-14 text-white sm:flex-row">
+      {/* ── CTA ── */}
+      <section className="cta-codex">
+        <div className="container-fp grid gap-5 items-center sm:grid-cols-[1.75fr_repeat(3,1fr)]">
           <div>
-            <h2 className="text-2xl font-bold sm:text-3xl">Ready to build your workforce?</h2>
-            <p className="mt-1 text-white/85">Join thousands of companies and professionals worldwide on ForcePK.</p>
+            <small className="text-[13px] font-semibold" style={{ color: "#56e0df" }}>Join ForcePK Today</small>
+            <h2 className="text-2xl font-bold text-white sm:text-[26px]">Ready to get started?</h2>
+            <p className="mt-1 text-[13px] text-white/80">Choose your registration type and take the next step.</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/employers#post" className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-brand-dark transition hover:-translate-y-0.5 hover:bg-white/90">
-              Post Requirement <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/partners" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/50 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">Become a Partner</Link>
-          </div>
+          <Link href="/employer/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#082952" }}>
+            Register as an Employer <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <Link href="/partner/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#008e8c" }}>
+            Register as an OEP <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+          <Link href="/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#0968bd" }}>
+            Register as a Candidate <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </section>
     </>
-  );
-}
-
-function Heading({ eyebrow, title, sub, align = "center" }: { eyebrow: string; title: string; sub?: string; align?: "center" | "left" }) {
-  return (
-    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <span className="eyebrow">{eyebrow}</span>
-      <h2 className="mt-2 h2">{title}</h2>
-      {sub && <p className="mt-3 text-navy/60">{sub}</p>}
-    </div>
   );
 }
