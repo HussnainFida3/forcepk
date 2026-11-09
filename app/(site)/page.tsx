@@ -93,9 +93,9 @@ export default async function Home() {
       <section className="reg-overlap" style={{ width: "min(92%, 1140px)", margin: "-60px auto 0" }}>
         <div className="grid gap-4 sm:grid-cols-3">
           {([
-            { role: "employer" as const, Icon: Building2, title: "Register as an Employer", desc: "Submit your company's workforce requirements and connect with suitable recruitment partners.", btn: "Register as an Employer", href: "/employer/register" },
-            { role: "oep" as const, Icon: Users, title: "Register as an OEP Partner", desc: "Register your licensed organization, share recruitment capabilities and explore relevant employer requirements.", btn: "Register as an OEP", href: "/partner/register" },
-            { role: "candidate" as const, Icon: UserCheck, title: "Register as a Candidate", desc: "Create your profile, upload your CV and explore relevant job opportunities.", btn: "Register as a Candidate", href: "/register" },
+            { role: "employer" as const, Icon: Building2, title: "Register as an Employer", desc: "Submit your company's workforce requirements and connect with suitable recruitment partners.", btn: "Register as an Employer", href: "/register/employer" },
+            { role: "oep" as const, Icon: Users, title: "Register as an OEP Partner", desc: "Register your licensed organization, share recruitment capabilities and explore relevant employer requirements.", btn: "Register as an OEP", href: "/register/oep" },
+            { role: "candidate" as const, Icon: UserCheck, title: "Register as a Candidate", desc: "Create your profile, upload your CV and explore relevant job opportunities.", btn: "Register as a Candidate", href: "/register/candidate" },
           ]).map((c) => (
             <article key={c.role} className="rounded-lg bg-white p-4 flex flex-col" style={{ boxShadow: "0 5px 20px rgba(11,40,64,0.08)" }}>
               <div className="flex items-start gap-3 flex-1">
@@ -262,13 +262,13 @@ export default async function Home() {
             <h2 className="text-2xl font-bold text-white sm:text-[26px]">Ready to get started?</h2>
             <p className="mt-1 text-[13px] text-white/80">Choose your registration type and take the next step.</p>
           </div>
-          <Link href="/employer/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#082952" }}>
+          <Link href="/register/employer" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#082952" }}>
             Register as an Employer <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <Link href="/partner/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#008e8c" }}>
+          <Link href="/register/oep" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#008e8c" }}>
             Register as an OEP <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <Link href="/register" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#0968bd" }}>
+          <Link href="/register/candidate" className="flex items-center justify-center gap-2 rounded-md border border-[#a1bdd2] px-3 py-3 text-[12px] font-bold text-white" style={{ background: "#0968bd" }}>
             Register as a Candidate <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
