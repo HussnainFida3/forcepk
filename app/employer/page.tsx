@@ -20,7 +20,7 @@ const statusTone: Record<string, string> = {
 
 export default async function EmployerDashboard({ searchParams }: { searchParams: { created?: string } }) {
   const session = await auth();
-  const me = session?.user?.id ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { companyId: true } }) : null;
+  const me = session?.user?.id ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, companyId: true, company: { select: { name: true } } } }) : null;
   const s = await getEmployerStats(me?.companyId ?? undefined);
   const empCards = [
     { label: "Active Requirements", value: s.active, icon: "doc", tone: "navy", delta: 8, spark: spk(s.active) },
@@ -46,7 +46,7 @@ export default async function EmployerDashboard({ searchParams }: { searchParams
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-navy">Employer Dashboard</h1>
-          <p className="text-sm text-navy/60">Welcome back, ABC Trading Co. — here&apos;s your recruitment activity.</p>
+          <p className="text-sm text-navy/60">Welcome back, {me?.company?.name ?? me?.name ?? "Employer"} — here&apos;s your recruitment activity.</p>
         </div>
         <Link href="/employer/requirements/new" className="btn-primary"><Icon name="doc" className="h-4 w-4" /> Create Requirement</Link>
       </div>

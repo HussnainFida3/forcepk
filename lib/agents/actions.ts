@@ -17,6 +17,16 @@ export interface Tool {
 
 const S = (v: unknown) => (typeof v === "string" ? v : v == null ? undefined : String(v));
 const N = (v: unknown) => (typeof v === "number" ? v : v == null || v === "" ? undefined : Number(v));
+
+/** Next wall-clock occurrence of HH:MM (24h); rolls to tomorrow if already past. */
+function nextOccurrence(timeOfDay: string): Date {
+  const [h, m] = String(timeOfDay).split(":").map((n) => parseInt(n, 10));
+  const d = new Date();
+  d.setSeconds(0, 0);
+  d.setHours(Number.isFinite(h) ? h : 9, Number.isFinite(m) ? m : 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  return d;
+}
 const obj = (props: Record<string, unknown>, required: string[] = []) => ({ type: "object", properties: props, required });
 const str = (description: string) => ({ type: "string", description });
 const int = (description: string) => ({ type: "integer", description });
@@ -278,6 +288,36 @@ const candidateTools: Tool[] = [
     },
   },
   {
+    name: "list_applications", description: "List candidate applications, optionally by stage or requirement.",
+    parameters: obj({ stage: str("stage filter"), requirementId: str("requirement id"), limit: int("default 20") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.stage)) where.stage = S(a.stage)!.toUpperCase();
+      if (S(a.requirementId)) where.requirementId = S(a.requirementId);
+      const rows = await prisma.application.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { aiMatch: "desc" }, select: { id: true, stage: true, aiMatch: true, candidateId: true, requirementId: true } });
+      return { count: rows.length, applications: rows };
+    },
+  },
+  {
+    name: "auto_match_candidates", description: "Find the best candidate matches for a requirement based on profession, skills and experience. Returns ranked candidates with match scores.",
+    parameters: obj({ requirementId: str("requirement id"), limit: int("how many top matches, default 10") }, ["requirementId"]),
+    run: async (a) => {
+      const req = await prisma.requirement.findUnique({ where: { id: S(a.requirementId)! }, select: { profession: true, skills: true, experience: true } });
+      if (!req) return { error: "Requirement not found." };
+      const where: Record<string, unknown> = {};
+      if (req.profession) where.profession = { contains: req.profession, mode: "insensitive" };
+      const candidates = await prisma.candidateProfile.findMany({ where, take: Math.min(N(a.limit) ?? 10, 50), orderBy: { profileStrength: "desc" }, select: { id: true, profession: true, city: true, experienceYrs: true, skills: true, profileStrength: true, user: { select: { name: true } } } });
+      const ranked = candidates.map((c) => {
+        const skillMatch = req.skills.length ? Math.round(c.skills.filter((s) => req.skills.some((rs) => rs.toLowerCase() === s.toLowerCase())).length / req.skills.length * 100) : 50;
+        const expMatch = req.experience ? Math.min(100, Math.round((c.experienceYrs / Math.max(parseInt(req.experience, 10) || 1, 1)) * 100)) : 50;
+        const score = Math.round(skillMatch * 0.5 + expMatch * 0.3 + c.profileStrength * 0.2);
+        return { candidateId: c.id, name: c.user?.name ?? "—", profession: c.profession, experience: c.experienceYrs, score, skillMatch, expMatch };
+      }).sort((a, b) => b.score - a.score);
+      await logAction("candidate-matching", "auto_match_candidates", `${ranked.length} matches for ${S(a.requirementId)}`);
+      return { requirement: S(a.requirementId), matches: ranked };
+    },
+  },
+  {
     name: "set_application_stage", description: "Move an application/candidate through the pipeline (shortlist, interview, select, deploy, reject).",
     parameters: obj({ id: str("application id"), stage: str("SUBMITTED|SHORTLISTED|INTERVIEW|SELECTED|DEPLOYED|PROCESSING|REJECTED") }, ["id", "stage"]),
     run: async (a) => { const ap = await prisma.application.update({ where: { id: S(a.id)! }, data: { stage: S(a.stage)!.toUpperCase() as never } }); await logAction("candidate-matching", "set_application_stage", `${ap.id} -> ${ap.stage}`); return { id: ap.id, stage: ap.stage }; },
@@ -295,6 +335,18 @@ const interviewTools: Tool[] = [
       if (S(a.status)) where.status = S(a.status)!.toUpperCase();
       const rows = await prisma.interview.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { createdAt: "desc" }, select: { id: true, method: true, status: true, score: true, scheduledAt: true } });
       return { count: rows.length, interviews: rows };
+    },
+  },
+  {
+    name: "schedule_interview", description: "Schedule a new interview for an application.",
+    parameters: obj({ applicationId: str("application id"), scheduledAt: str("ISO datetime"), method: str("Online|In-Person|Trade Test"), link: str("meeting link (auto-generated if Online and blank)") }, ["applicationId"]),
+    run: async (a) => {
+      const iv = await prisma.interview.create({
+        data: { applicationId: S(a.applicationId)!, scheduledAt: S(a.scheduledAt) ? new Date(S(a.scheduledAt)!) : null, method: S(a.method) ?? "Online", link: S(a.link) ?? null, status: "SCHEDULED" },
+      });
+      await prisma.application.update({ where: { id: S(a.applicationId)! }, data: { stage: "INTERVIEW" } });
+      await logAction("interview", "schedule_interview", `${iv.id} at ${iv.scheduledAt}`);
+      return { created: iv.id, scheduledAt: iv.scheduledAt, method: iv.method };
     },
   },
   {
@@ -332,6 +384,38 @@ const deploymentTools: Tool[] = [
 /* ───────────────────────── Relationship / Finance ───────────────────────── */
 
 const relationshipTools: Tool[] = [
+  {
+    name: "list_clients", description: "List employer companies (clients), optionally by status or industry.",
+    parameters: obj({ status: str("VERIFIED|PENDING|SUSPENDED"), industry: str("industry filter"), limit: int("default 20") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.status)) where.status = S(a.status)!.toUpperCase();
+      if (S(a.industry)) where.industry = { contains: S(a.industry), mode: "insensitive" };
+      const rows = await prisma.company.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { createdAt: "desc" }, select: { id: true, name: true, industry: true, city: true, status: true, contactName: true, phone: true, email: true } });
+      return { count: rows.length, clients: rows };
+    },
+  },
+  {
+    name: "list_partners", description: "List OEP/recruitment partners, optionally by status.",
+    parameters: obj({ status: str("VERIFIED|PENDING|SUSPENDED"), limit: int("default 20") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.status)) where.status = S(a.status)!.toUpperCase();
+      const rows = await prisma.oep.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { createdAt: "desc" }, select: { id: true, name: true, licenseNo: true, city: true, phone: true, email: true, tier: true } });
+      return { count: rows.length, partners: rows };
+    },
+  },
+  {
+    name: "list_commissions", description: "List partner commissions by status.",
+    parameters: obj({ status: str("PENDING|APPROVED|PAYABLE|PAID"), oepId: str("partner id"), limit: int("default 20") }),
+    run: async (a) => {
+      const where: Record<string, unknown> = {};
+      if (S(a.status)) where.status = S(a.status)!.toUpperCase();
+      if (S(a.oepId)) where.oepId = S(a.oepId);
+      const rows = await prisma.commission.findMany({ where, take: Math.min(N(a.limit) ?? 20, 100), orderBy: { createdAt: "desc" }, select: { id: true, oepId: true, grossFee: true, oepShare: true, currency: true, status: true } });
+      return { count: rows.length, commissions: rows.map((r) => ({ ...r, grossFee: Number(r.grossFee), oepShare: Number(r.oepShare) })) };
+    },
+  },
   {
     name: "list_invoices", description: "List client invoices by status.",
     parameters: obj({ status: str("PAID|PENDING|OVERDUE|VOID"), limit: int("default 20") }),
@@ -375,7 +459,8 @@ export const SUBORDINATES = Object.keys(BY_AGENT) as Exclude<ForcePkAgent, "ceo"
 
 const ceoTools: Tool[] = [
   // The CEO can run any subordinate agent's tools directly.
-  ...SUBORDINATES.flatMap((agent) => BY_AGENT[agent]),
+  // Deduplicate by name — compliance and cv-document share documentTools.
+  ...SUBORDINATES.flatMap((agent) => BY_AGENT[agent]).filter((t, i, arr) => arr.findIndex((u) => u.name === t.name) === i),
   {
     name: "schedule_task",
     description: "Schedule work for a subordinate agent. kind ONCE runs now; UNTIL repeats until targetCount is met (e.g. collect leads until 500); RECURRING repeats every intervalSec. The command is a natural-language instruction the agent will execute.",
@@ -416,9 +501,38 @@ const ceoTools: Tool[] = [
   },
 ];
 
+/** A self-scheduling tool every specialist agent gets, so you can tell ANY
+ *  agent (not just the CEO) to do something on a schedule and it actually lands
+ *  as a real AgentTask, visible in the Command Centre Scheduler + Task Board. */
+function scheduleToolFor(agent: ForcePkAgent): Tool {
+  return {
+    name: "schedule_task",
+    description: "Schedule YOUR OWN work to run later, optionally repeating daily/weekly (e.g. 'collect Saudi leads every day at 9am', 'post daily at 12am'). Whenever the user asks for anything recurring or 'at <time>', CALL this — do not just agree in words.",
+    parameters: obj({
+      command: str("what you should do, self-contained so it can run unattended"),
+      timeOfDay: str("first run as 24h HH:MM, e.g. '00:00' for midnight, '09:00' for 9am"),
+      repeat: str("none | daily | weekly"),
+    }, ["command", "timeOfDay"]),
+    run: async (a) => {
+      const repeat = S(a.repeat);
+      const kind = repeat === "daily" || repeat === "weekly" ? "RECURRING" : "ONCE";
+      const intervalSec = repeat === "weekly" ? 604800 : repeat === "daily" ? 86400 : null;
+      const nextRunAt = nextOccurrence(S(a.timeOfDay) ?? "09:00");
+      const task = await prisma.agentTask.create({
+        data: { agent, command: S(a.command)!, kind, targetCount: null, intervalSec, status: "PENDING", nextRunAt },
+      });
+      await logAction(agent, "schedule_task", `${task.command} [${kind}]`);
+      return {
+        scheduled: task.id, agent, kind, firstRunAt: nextRunAt,
+        confirmation: `Scheduled: "${task.command.slice(0, 80)}" — first run ${nextRunAt.toLocaleString()}${intervalSec ? `, repeating ${repeat}` : ""}. View it in the Command Centre → Scheduler (ForcePK) or Task Board.`,
+      };
+    },
+  };
+}
+
 export function toolsForAgent(agent: ForcePkAgent): Tool[] {
   if (agent === "ceo") return ceoTools;
-  return BY_AGENT[agent] ?? [];
+  return [...(BY_AGENT[agent] ?? []), scheduleToolFor(agent)];
 }
 
 /** OpenAI function-tool schema for a set of tools. */

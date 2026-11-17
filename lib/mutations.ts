@@ -6,7 +6,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { currentUser, nextRefCode } from "@/lib/session";
+import { currentUser, requireAdmin, nextRefCode } from "@/lib/session";
 import { sendEmail, sendWhatsApp, sendSMS } from "@/lib/integrations/channels";
 import { aiMatchScore, assistantAnswer } from "@/lib/integrations/ai";
 import { runAgentChat } from "@/lib/agents/chat";
@@ -57,6 +57,7 @@ export async function createRequirement(formData: FormData) {
 
 // ── Admin: create / manage requirements for any company ──
 export async function createAdminRequirement(formData: FormData) {
+  await requireAdmin();
   const g = (k: string) => String(formData.get(k) ?? "").trim();
   const companyId = g("companyId");
   if (!companyId || !g("profession")) return;
@@ -76,6 +77,7 @@ export async function createAdminRequirement(formData: FormData) {
 }
 
 export async function setRequirementStatus(requirementId: string, status: "OPEN" | "CLOSED" | "FULFILLED" | "PENDING_VERIFICATION") {
+  await requireAdmin();
   await prisma.requirement.update({ where: { id: requirementId }, data: { status } });
   await log("requirement.status", "Requirement", requirementId);
   revalidatePath("/admin/requirements");
@@ -83,6 +85,7 @@ export async function setRequirementStatus(requirementId: string, status: "OPEN"
 }
 
 export async function toggleRequirementPriority(requirementId: string, current: string) {
+  await requireAdmin();
   const next = current === "URGENT" ? "NORMAL" : "URGENT";
   await prisma.requirement.update({ where: { id: requirementId }, data: { priority: next as never } });
   await log("requirement.priority", "Requirement", requirementId);
@@ -164,6 +167,7 @@ async function createCommissionIfNeeded(applicationId: string, oepId: string | n
 }
 
 export async function createInvoice(formData: FormData) {
+  await requireAdmin();
   const companyId = String(formData.get("companyId") ?? "");
   const amount = parseFloat(String(formData.get("amount") ?? "0"));
   if (!companyId || !amount) return;
@@ -173,11 +177,13 @@ export async function createInvoice(formData: FormData) {
 }
 
 export async function setInvoiceStatus(invoiceId: string, status: string) {
+  await requireAdmin();
   await prisma.invoice.update({ where: { id: invoiceId }, data: { status } });
   revalidatePath("/admin/finance");
 }
 
 export async function setCommissionStatus(commissionId: string, status: "PENDING" | "APPROVED" | "PAYABLE" | "PAID") {
+  await requireAdmin();
   await prisma.commission.update({ where: { id: commissionId }, data: { status } });
   revalidatePath("/admin/finance");
 }
@@ -199,6 +205,7 @@ export async function rejectApplication(applicationId: string) {
 
 // ── Admin: verify / suspend a company ──
 export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED" | "PENDING") {
+  await requireAdmin();
   await prisma.company.update({ where: { id: companyId }, data: { status } });
   await log("company.status", "Company", companyId);
   await notifyCompanyUsers(companyId, `Your company was ${status.toLowerCase()}`, "Admin updated your verification status.");
@@ -209,6 +216,7 @@ export async function setCompanyStatus(companyId: string, status: "VERIFIED" | "
 
 // ── Admin: edit a company's profile ──
 export async function updateCompany(companyId: string, formData: FormData) {
+  await requireAdmin();
   const g = (k: string) => { const v = String(formData.get(k) ?? "").trim(); return v || null; };
   await prisma.company.update({
     where: { id: companyId },
@@ -231,6 +239,7 @@ export async function updateCompany(companyId: string, formData: FormData) {
 
 // ── Admin: permanently delete a company (and its dependent records) ──
 export async function deleteCompany(companyId: string) {
+  await requireAdmin();
   // Remove dependent rows first to satisfy FK constraints, then the company.
   await prisma.$transaction([
     prisma.application.deleteMany({ where: { requirement: { companyId } } }),
@@ -246,6 +255,7 @@ export async function deleteCompany(companyId: string) {
 }
 
 export async function setOepStatus(oepId: string, status: "VERIFIED" | "REJECTED" | "SUSPENDED") {
+  await requireAdmin();
   await prisma.oep.update({ where: { id: oepId }, data: { status } });
   await log("oep.status", "Oep", oepId);
   revalidatePath("/admin");
@@ -278,6 +288,7 @@ export async function uploadDocument(formData: FormData) {
 }
 
 export async function setDocumentStatus(documentId: string, status: DocStatus) {
+  await requireAdmin();
   const doc = await prisma.document.update({ where: { id: documentId }, data: { status }, select: { candidate: { select: { userId: true } } } });
   await log("document.status", "Document", documentId);
   await notifyUser(doc.candidate.userId, `Document ${status.toLowerCase()}`, "A document on your profile was reviewed.");
@@ -647,6 +658,7 @@ const csv = (fd: FormData, k: string) => { const v = String(fd.get(k) ?? "").tri
 
 // ── Partners (OEP) ──
 export async function updateOep(oepId: string, formData: FormData) {
+  await requireAdmin();
   await prisma.oep.update({
     where: { id: oepId },
     data: {
@@ -669,6 +681,7 @@ export async function updateOep(oepId: string, formData: FormData) {
 }
 
 export async function deleteOep(oepId: string) {
+  await requireAdmin();
   await prisma.$transaction([
     prisma.application.updateMany({ where: { oepId }, data: { oepId: null } }),
     prisma.user.updateMany({ where: { oepId }, data: { oepId: null } }),
@@ -735,6 +748,7 @@ export async function createOepRequirement(formData: FormData) {
 
 // ── Requirements ──
 export async function updateRequirement(requirementId: string, formData: FormData) {
+  await requireAdmin();
   await prisma.requirement.update({
     where: { id: requirementId },
     data: {
@@ -766,6 +780,7 @@ export async function updateRequirement(requirementId: string, formData: FormDat
 }
 
 export async function deleteRequirement(requirementId: string) {
+  await requireAdmin();
   await prisma.requirement.delete({ where: { id: requirementId } }); // applications cascade
   await log("requirement.delete", "Requirement", requirementId);
   revalidatePath("/admin/requirements");
@@ -774,6 +789,7 @@ export async function deleteRequirement(requirementId: string) {
 
 // ── Candidates (admin) ──
 export async function updateCandidate(candidateId: string, formData: FormData) {
+  await requireAdmin();
   await prisma.candidateProfile.update({
     where: { id: candidateId },
     data: {
@@ -796,6 +812,7 @@ export async function updateCandidate(candidateId: string, formData: FormData) {
 }
 
 export async function deleteCandidate(candidateId: string) {
+  await requireAdmin();
   const profile = await prisma.candidateProfile.findUnique({ where: { id: candidateId }, select: { userId: true } });
   await prisma.candidateProfile.delete({ where: { id: candidateId } }); // documents + applications cascade
   if (profile) await prisma.user.delete({ where: { id: profile.userId } }).catch(() => {});
@@ -824,6 +841,7 @@ export async function updateLead(leadId: string, formData: FormData) {
 }
 
 export async function deleteLead(leadId: string) {
+  await requireAdmin();
   await prisma.lead.delete({ where: { id: leadId } });
   await log("lead.delete", "Lead", leadId);
   revalidatePath("/admin/crm");
@@ -831,18 +849,21 @@ export async function deleteLead(leadId: string) {
 
 // ── Finance ──
 export async function recordInvoicePayment(invoiceId: string) {
+  await requireAdmin();
   await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "PAID" } });
   await log("invoice.paid", "Invoice", invoiceId);
   revalidatePath("/admin/finance");
 }
 
 export async function voidInvoice(invoiceId: string) {
+  await requireAdmin();
   await prisma.invoice.update({ where: { id: invoiceId }, data: { status: "VOID" } });
   await log("invoice.void", "Invoice", invoiceId);
   revalidatePath("/admin/finance");
 }
 
 export async function deleteInvoice(invoiceId: string) {
+  await requireAdmin();
   await prisma.invoice.delete({ where: { id: invoiceId } });
   await log("invoice.delete", "Invoice", invoiceId);
   revalidatePath("/admin/finance");

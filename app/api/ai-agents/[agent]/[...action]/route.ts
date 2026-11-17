@@ -48,7 +48,7 @@ export async function GET(req: Request, { params }: Ctx) {
   if (!isForcePkAgent(agent)) return json(req, { success: false, error: { message: "Unknown agent." } }, 404);
   const act = action?.[0] ?? "summary";
 
-  if (act === "stats") return json(req, { success: true, data: agentStats(agent), meta: {} });
+  if (act === "stats") return json(req, { success: true, data: await agentStats(agent), meta: {} });
 
   if (act === "activity") {
     const soon = new Date(Date.now() + 24 * 3600 * 1000);

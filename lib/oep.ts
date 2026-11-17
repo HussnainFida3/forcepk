@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import { toneMap } from "./admin";
 export { toneMap };
 
@@ -14,47 +15,49 @@ export const oepNav = [
   { label: "Company Profile", icon: "building", href: "/partner/profile" },
 ] as const;
 
-export const oepCards = [
-  { label: "Open Requirements", value: "12", icon: "doc", tone: "navy" },
-  { label: "Assigned", value: "8", icon: "briefcase", tone: "green" },
-  { label: "Candidates Submitted", value: "420", icon: "users", tone: "purple" },
-  { label: "Shortlisted", value: "180", icon: "star", tone: "amber" },
-  { label: "Interviews", value: "95", icon: "chat", tone: "teal" },
-  { label: "Selected", value: "72", icon: "check-circle", tone: "green" },
-  { label: "Deployed", value: "61", icon: "globe", tone: "blue" },
-  { label: "Commission (PKR)", value: "485K", icon: "award", tone: "navy" },
-] as const;
 
-export const marketplace = [
-  { id: "FP-4587", title: "Electricians", city: "Dubai, UAE", req: 50, exp: "3+ years", deadline: "20 Oct", status: "Open" },
-  { id: "FP-4620", title: "HVAC Technicians", city: "Doha, Qatar", req: 30, exp: "2+ years", deadline: "25 Oct", status: "Open" },
-  { id: "FP-4622", title: "Plumbers", city: "Riyadh, KSA", req: 40, exp: "3+ years", deadline: "28 Oct", status: "Open" },
-  { id: "FP-4631", title: "Cleaners", city: "Dubai, UAE", req: 20, exp: "1+ years", deadline: "30 Oct", status: "Open" },
-  { id: "FP-4640", title: "Heavy Drivers", city: "Singapore", req: 25, exp: "4+ years", deadline: "02 Nov", status: "Open" },
-] as const;
-
-export const performance = [
-  { label: "Candidates Submitted", value: "420", icon: "users", tone: "purple" },
-  { label: "Shortlisted", value: "180", icon: "star", tone: "amber" },
-  { label: "Selected", value: "72", icon: "check-circle", tone: "green" },
-  { label: "Deployed", value: "61", icon: "globe", tone: "blue" },
-] as const;
-
-export const perfMetrics = [
-  { label: "Selection Rate", value: "17.1%", icon: "star" },
-  { label: "Document Accuracy", value: "96%", icon: "shield" },
-  { label: "Response Time", value: "4.2 hrs", icon: "clock" },
-] as const;
-
-export const ranking = { tier: "Gold Partner", rank: 3, rating: 4.8 };
-
-export const topPartners: { rank: number; name: string; score: number; you?: boolean }[] = [
-  { rank: 1, name: "Global Talent Solutions", score: 98 },
-  { rank: 2, name: "HR Connect Overseas", score: 92 },
-  { rank: 3, name: "ABC Recruitment Agency", score: 88, you: true },
-  { rank: 4, name: "Future Workforce", score: 84 },
-  { rank: 5, name: "Bright Manpower", score: 80 },
-];
+export async function getPartnerRanking(oepId?: string) {
+  const oeps = await prisma.oep.findMany({
+    where: { status: "VERIFIED" },
+    select: { id: true, name: true, rating: true, tier: true, _count: { select: { applications: true } } },
+    orderBy: { rating: "desc" },
+  });
+  const leaderboard = oeps.map((o, i) => ({
+    rank: i + 1, name: o.name, score: Math.round(o.rating * 20),
+    you: o.id === oepId,
+  }));
+  const me = leaderboard.find((l) => l.you);
+  const myOep = oeps.find((o) => o.id === oepId);
+  const submitted = oepId
+    ? await prisma.application.count({ where: { oepId } })
+    : 0;
+  const selected = oepId
+    ? await prisma.application.count({ where: { oepId, stage: "SELECTED" } })
+    : 0;
+  const selectionRate = submitted > 0 ? Math.round((selected / submitted) * 1000) / 10 : 0;
+  const candidateIds = oepId
+    ? (await prisma.application.findMany({ where: { oepId }, select: { candidateId: true }, distinct: ["candidateId"] })).map((a) => a.candidateId)
+    : [];
+  const docs = candidateIds.length
+    ? await prisma.document.count({ where: { candidateId: { in: candidateIds }, status: "VERIFIED" } }).catch(() => 0)
+    : 0;
+  const totalDocs = candidateIds.length
+    ? await prisma.document.count({ where: { candidateId: { in: candidateIds } } }).catch(() => 0)
+    : 0;
+  const docAccuracy = totalDocs > 0 ? Math.round((docs / totalDocs) * 100) : 0;
+  return {
+    ranking: {
+      tier: myOep?.tier ?? "Bronze",
+      rank: me?.rank ?? leaderboard.length + 1,
+      rating: myOep?.rating ?? 0,
+    },
+    topPartners: leaderboard.slice(0, 5),
+    perfMetrics: [
+      { label: "Selection Rate", value: `${selectionRate}%`, icon: "star" },
+      { label: "Document Accuracy", value: `${docAccuracy}%`, icon: "shield" },
+    ],
+  };
+}
 
 export const submissionDocs = [
   "Candidate CV", "Passport", "National ID", "Photographs",

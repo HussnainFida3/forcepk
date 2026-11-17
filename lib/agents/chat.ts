@@ -38,7 +38,7 @@ async function openAiCall(messages: unknown[], tools: unknown[]): Promise<{ cont
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: MODEL, messages, tools: tools.length ? tools : undefined, tool_choice: tools.length ? "auto" : undefined, max_tokens: 900, temperature: 0.2 }),
+      body: JSON.stringify({ model: MODEL, messages, tools: tools.length ? tools : undefined, tool_choice: tools.length ? "auto" : undefined, max_tokens: 2048, temperature: 0.2 }),
       signal: AbortSignal.timeout(60000),
     });
     if (!res.ok) return null;

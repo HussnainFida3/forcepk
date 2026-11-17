@@ -10,6 +10,14 @@ export async function currentUser() {
   });
 }
 
+const ADMIN_ROLES = new Set(["SUPER_ADMIN", "OPS_MANAGER"]);
+
+export async function requireAdmin() {
+  const u = await currentUser();
+  if (!u || !ADMIN_ROLES.has(u.role)) throw new Error("Admin access required.");
+  return u;
+}
+
 // Generate a unique requirement ref code like FP-7314
 export async function nextRefCode() {
   const n = await prisma.requirement.count();

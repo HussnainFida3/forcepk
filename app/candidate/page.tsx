@@ -55,7 +55,7 @@ export default async function CandidateDashboard() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Welcome back, Muhammad!</h1>
+          <h1 className="text-2xl font-bold text-navy">Welcome back, {session?.user?.name?.split(" ")[0] ?? "Candidate"}!</h1>
           <p className="text-sm text-navy/60">Your job matches and application progress at a glance.</p>
         </div>
         <Link href="/candidate/profile" className="btn-primary"><Icon name="doc" className="h-4 w-4" /> Build My CV</Link>

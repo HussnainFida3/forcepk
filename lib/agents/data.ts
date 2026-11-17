@@ -104,15 +104,16 @@ export async function agentSummary(agent: ForcePkAgent): Promise<Summary> {
       };
     }
     case "candidate-matching": {
-      const [total, match, byProfession, byStage] = await Promise.all([
+      const [total, match, byProfession, byCity] = await Promise.all([
         prisma.candidateProfile.count(),
         prisma.application.aggregate({ _avg: { aiMatch: true } }),
         prisma.candidateProfile.groupBy({ by: ["profession"], _count: { _all: true } }),
-        prisma.application.groupBy({ by: ["stage"], _count: { _all: true } }),
+        prisma.candidateProfile.groupBy({ by: ["city"], _count: { _all: true } }),
       ]);
+      // Breakdowns are CANDIDATE-based so they match this agent's record list.
       return {
         totalCandidates: total, avgMatchScore: Math.round(match._avg.aiMatch ?? 0),
-        candidatesByProfession: toMap(byProfession, "profession"), applicationsByStage: toMap(byStage, "stage"),
+        candidatesByProfession: toMap(byProfession, "profession"), candidatesByCity: toMap(byCity, "city"),
       };
     }
     case "cv-document": {
@@ -149,33 +150,34 @@ export async function agentSummary(agent: ForcePkAgent): Promise<Summary> {
       };
     }
     case "relationship": {
-      const [clients, partners, invByStatus, grouped] = await Promise.all([
+      const [clients, partners, grouped] = await Promise.all([
         prisma.company.count({ where: { status: "VERIFIED" } }),
         prisma.oep.count({ where: { status: "VERIFIED" } }),
-        prisma.invoice.groupBy({ by: ["status"], _count: { _all: true } }),
         prisma.requirement.groupBy({ by: ["companyId"], _count: { _all: true } }),
       ]);
       const repeat = grouped.filter((g) => (g._count?._all ?? 0) > 1).length;
       return {
         activeClients: clients, activePartners: partners, repeatClients: repeat,
-        totalEngagements: grouped.length, invoicesByStatus: toMap(invByStatus, "status"),
+        totalEngagements: grouped.length,
       };
     }
     case "ceo": {
-      const [leads, openReq, candidates, byStage, invAgg, overdue, invByStatus] = await Promise.all([
+      // Breakdowns are LEAD-based so they match the CEO's record list (leads) —
+      // clicking a stage/source opens exactly those rows.
+      const [leads, openReq, candidates, deployed, invAgg, overdue, byStage, bySource] = await Promise.all([
         prisma.lead.count(),
         prisma.requirement.count({ where: { status: "OPEN" } }),
         prisma.candidateProfile.count(),
-        prisma.application.groupBy({ by: ["stage"], _count: { _all: true } }),
+        prisma.application.count({ where: { stage: "DEPLOYED" } }),
         prisma.invoice.aggregate({ _sum: { amount: true }, where: { status: "PAID" } }),
         prisma.invoice.count({ where: { status: "OVERDUE" } }),
-        prisma.invoice.groupBy({ by: ["status"], _count: { _all: true } }),
+        prisma.lead.groupBy({ by: ["stage"], _count: { _all: true } }),
+        prisma.lead.groupBy({ by: ["source"], _count: { _all: true } }),
       ]);
-      const m = toMap(byStage, "stage");
       return {
-        leads, openRequirements: openReq, candidates, deployed: m.DEPLOYED ?? 0,
+        leads, openRequirements: openReq, candidates, deployed,
         revenueUsd: Number(invAgg._sum.amount ?? 0), overdueInvoices: overdue,
-        pipelineByStage: m, invoicesByStatus: toMap(invByStatus, "status"),
+        leadsByStage: toMap(byStage, "stage"), leadsBySource: toMap(bySource, "source"),
       };
     }
   }
@@ -189,10 +191,19 @@ export interface ActivityRow {
 export async function agentActivity(agent: ForcePkAgent, take = 25): Promise<ActivityRow[]> {
   const iso = (d: Date) => d.toISOString();
   switch (agent) {
-    case "lead-gen":
-    case "relationship": {
+    case "lead-gen": {
       const rows = await prisma.lead.findMany({ orderBy: { updatedAt: "desc" }, take, select: { id: true, name: true, company: true, stage: true, updatedAt: true } });
       return rows.map((r) => ({ id: r.id, action: `Lead "${r.company ?? r.name}" at ${r.stage}`, targetType: "Lead", targetId: r.id, createdAt: iso(r.updatedAt), admin: null, meta: { stage: r.stage } }));
+    }
+    case "relationship": {
+      const [clients, partners] = await Promise.all([
+        prisma.company.findMany({ where: { status: "VERIFIED" }, orderBy: { createdAt: "desc" }, take: Math.ceil(take / 2), select: { id: true, name: true, city: true, createdAt: true } }),
+        prisma.oep.findMany({ where: { status: "VERIFIED" }, orderBy: { createdAt: "desc" }, take: Math.ceil(take / 2), select: { id: true, name: true, city: true, createdAt: true } }),
+      ]);
+      return [
+        ...clients.map((c) => ({ id: c.id, action: `Client: ${c.name} (${c.city ?? "—"})`, targetType: "Company", targetId: c.id, createdAt: iso(c.createdAt), admin: null, meta: null })),
+        ...partners.map((p) => ({ id: p.id, action: `Partner: ${p.name} (${p.city ?? "—"})`, targetType: "OEP", targetId: p.id, createdAt: iso(p.createdAt), admin: null, meta: null })),
+      ].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, take);
     }
     case "company-research": {
       const rows = await prisma.company.findMany({ orderBy: { createdAt: "desc" }, take, select: { id: true, name: true, status: true, city: true, createdAt: true } });
@@ -227,13 +238,20 @@ export async function agentActivity(agent: ForcePkAgent, take = 25): Promise<Act
   }
 }
 
-export function agentStats(agent: ForcePkAgent) {
+export async function agentStats(agent: ForcePkAgent) {
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const callsThisMonth = await prisma.agentActionLog.count({
+    where: { agent, createdAt: { gte: monthStart } },
+  });
+  const costPerCall = 0.002;
   return {
     agent,
     model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
     rateLimitPerMinute: 30,
     monthlyBudgetUsd: 50,
-    callsThisMonth: 0,
-    spendThisMonthUsd: 0,
+    callsThisMonth,
+    spendThisMonthUsd: Math.round(callsThisMonth * costPerCall * 100) / 100,
   };
 }

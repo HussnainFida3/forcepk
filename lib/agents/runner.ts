@@ -16,7 +16,7 @@ let started = false;
 let ticking = false;
 
 const TICK_MS = 4000;
-const MAX_RUNS = 400; // safety cap for UNTIL/RECURRING
+const MAX_RUNS = 3000; // safety cap for UNTIL/RECURRING (raised for large lead targets)
 
 async function progressCount(agent: ForcePkAgent): Promise<number> {
   switch (agent) {
@@ -30,7 +30,7 @@ async function progressCount(agent: ForcePkAgent): Promise<number> {
     case "interview": return prisma.interview.count();
     case "deployment": return prisma.application.count();
     case "relationship": return prisma.invoice.count();
-    default: return 0;
+    case "ceo": return prisma.lead.count();
   }
 }
 
@@ -83,21 +83,31 @@ async function processTask(task: { id: string; agent: string; command: string; k
         where: { id: task.id },
         data: { progress: count, result: `${note} · ${count}/${target}`, status: done ? "DONE" : "RUNNING", nextRunAt: done ? null : new Date(Date.now() + 1500) },
       });
+      await logRun(agent, "Ran scheduled task", note, true);
       return;
     }
 
     if (task.kind === "RECURRING") {
       const res = await runAgentChat(agent, task.command);
       await prisma.agentTask.update({ where: { id: task.id }, data: { result: res.reply.slice(0, 200), status: "RUNNING", nextRunAt: new Date(Date.now() + (task.intervalSec ?? 3600) * 1000) } });
+      await logRun(agent, "Ran recurring task", res.reply.slice(0, 160), true);
       return;
     }
 
     // ONCE
     const res = await runAgentChat(agent, task.command);
     await prisma.agentTask.update({ where: { id: task.id }, data: { status: "DONE", result: `${res.reply.slice(0, 180)} (${res.toolCallsExecuted.length} actions)` } });
+    await logRun(agent, "Completed task", res.reply.slice(0, 160), true);
   } catch (e) {
     await prisma.agentTask.update({ where: { id: task.id }, data: { status: "FAILED", result: e instanceof Error ? e.message : "Task failed." } });
+    await logRun(agent, "Task failed", e instanceof Error ? e.message : "error", false);
   }
+}
+
+/** Record every scheduled run in the shared action log so the Command Centre's
+ *  activity/reporting feed reflects all real agent work, not just tool calls. */
+async function logRun(agent: string, action: string, detail: string, ok: boolean) {
+  try { await prisma.agentActionLog.create({ data: { agent, action, detail: detail || null, ok } }); } catch { /* non-fatal */ }
 }
 
 async function tick() {

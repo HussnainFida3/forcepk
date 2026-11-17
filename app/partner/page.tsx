@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Icon from "@/components/Icon";
 import StatCard from "@/components/ui/StatCard";
-import { perfMetrics, ranking, topPartners, toneMap } from "@/lib/oep";
+import { getPartnerRanking, toneMap } from "@/lib/oep";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPartnerStats } from "@/lib/queries";
@@ -12,8 +12,9 @@ const spk = (v: number) => Array.from({ length: 12 }, (_, i) => Math.max(0, Math
 
 export default async function PartnerDashboard({ searchParams }: { searchParams: { submitted?: string } }) {
   const session = await auth();
-  const me = session?.user?.id ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { oepId: true } }) : null;
+  const me = session?.user?.id ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, oepId: true, oep: { select: { name: true } } } }) : null;
   const s = await getPartnerStats(me?.oepId ?? undefined);
+  const { ranking, topPartners, perfMetrics } = await getPartnerRanking(me?.oepId ?? undefined);
   const oepCards = [
     { label: "Open Requirements", value: s.openReqs, icon: "doc", tone: "navy", delta: 6, spark: spk(s.openReqs) },
     { label: "Candidates Submitted", value: s.submitted, icon: "users", tone: "purple", delta: 14, spark: spk(s.submitted) },
@@ -35,7 +36,7 @@ export default async function PartnerDashboard({ searchParams }: { searchParams:
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-navy">Welcome back, ABC Recruitment!</h1>
+          <h1 className="text-2xl font-bold text-navy">Welcome back, {me?.oep?.name ?? me?.name ?? "Partner"}!</h1>
           <p className="text-sm text-navy/60">Here&apos;s your latest activity and performance at a glance.</p>
         </div>
         <Link href="/partner/submit" className="btn-primary"><Icon name="users" className="h-4 w-4" /> Submit Candidates</Link>
