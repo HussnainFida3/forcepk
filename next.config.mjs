@@ -4,6 +4,12 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   compress: true,
+  // Playwright is a heavy, native package loaded only at runtime (lazy dynamic
+  // import in the lead-gen Google Maps scraper). Keep Next from bundling/tracing
+  // it so the build stays clean and it resolves from node_modules on the server.
+  experimental: {
+    serverComponentsExternalPackages: ["playwright", "playwright-core"],
+  },
   async headers() {
     const securityHeaders = [
       { key: "X-Frame-Options", value: "SAMEORIGIN" },

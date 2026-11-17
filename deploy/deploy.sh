@@ -49,6 +49,8 @@ tar czf - \
   --exclude=.next \
   --exclude=.git \
   --exclude=.pgdata \
+  --exclude=cc \
+  --exclude=ref \
   --exclude='.env' \
   --exclude='.env.*' \
   --exclude='*.log' \

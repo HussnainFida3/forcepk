@@ -43,5 +43,3 @@ export const JOB_IMG: Record<string, string> = {
 export const jobImg = (title: string) =>
   JOB_IMG[title] ?? U("1590674899484-d5640e854abe", 400);
 
-export const avatar = (gender: "men" | "women", n: number) =>
-  `https://randomuser.me/api/portraits/${gender}/${n}.jpg`;

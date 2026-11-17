@@ -40,7 +40,7 @@ export default async function CompanyProfile({ params }: { params: { id: string 
             <h2 className="mt-10 text-xl font-bold text-navy">Open positions</h2>
             <div className="mt-4 space-y-3">
               {company.requirements.length === 0 && <p className="text-sm text-navy/40">No open positions right now.</p>}
-              {company.requirements.map((r) => (
+              {company.requirements.map((r: { id: string; refCode: string; title: string; profession: string; location: string | null; salary: string | null }) => (
                 <div key={r.id} className="card flex items-center justify-between p-4">
                   <div>
                     <h3 className="font-semibold text-navy">{r.title}</h3>

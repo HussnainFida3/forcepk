@@ -5,7 +5,7 @@ import {
   HardHat, Zap, Wind, Flame, Truck, Wrench, Briefcase, Heart,
   Monitor, Package, type LucideIcon,
 } from "lucide-react";
-import { faqs } from "@/lib/data";
+import { faqs, steps as DATA_STEPS } from "@/lib/data";
 import FraudWarning from "@/components/FraudWarning";
 
 /* ── Feature Band (6 tiles) ── */
@@ -18,13 +18,9 @@ const FEATURES = [
   { icon: BarChart3, title: "Progress\nTracking", body: "Track the status of requirements, applications and recruitment progress.", accent: "#009187" },
 ];
 
-/* ── How It Works (4 steps) ── */
-const STEPS = [
-  { n: 1, title: "Register", body: "Create your account as an employer, OEP partner or candidate.", accent: "#062b56" },
-  { n: 2, title: "Submit Information", body: "Provide your requirements, organization details or candidate profile.", accent: "#008f89" },
-  { n: 3, title: "Review & Match", body: "Information is reviewed and matched with suitable opportunities.", accent: "#126cc1" },
-  { n: 4, title: "Coordinate Next Steps", body: "Connect, communicate and move forward with the recruitment process.", accent: "#009187" },
-];
+/* ── How It Works (9-step recruitment process from data.ts) ── */
+const STEP_ACCENTS = ["#062b56", "#008f89", "#126cc1", "#009187", "#075270", "#116ab8", "#062b56", "#008f89", "#126cc1"];
+const STEPS = DATA_STEPS.map((s, i) => ({ n: s.n, title: s.t, body: s.d, accent: STEP_ACCENTS[i % STEP_ACCENTS.length] }));
 
 /* ── Categories (8 items) ── */
 const CATS: { icon: LucideIcon; name: string }[] = [
@@ -135,7 +131,7 @@ export default async function Home() {
         <div className="container-fp">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "#082952" }}>How It Works</h2>
           <p className="mt-2 text-[13px]" style={{ color: "#5e6b7b" }}>A simple process for employers, recruitment partners and job seekers.</p>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {STEPS.map((s, i) => (
               <div key={s.n} className="relative px-2 text-center">
                 <span className="mx-auto inline-grid h-11 w-11 place-items-center rounded-full text-white font-bold text-sm" style={{ background: s.accent }}>

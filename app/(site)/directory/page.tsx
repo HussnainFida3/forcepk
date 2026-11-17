@@ -23,7 +23,7 @@ export default async function Directory() {
 
       <section className="section">
         <div className="container-fp grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {companies.map((c) => (
+          {companies.map((c: { id: string; name: string; industry: string | null; city: string | null; _count: { requirements: number } }) => (
             <Link key={c.id} href={`/company/${c.id}`} className="card p-5 transition hover:-translate-y-0.5 hover:border-brand hover:shadow-md">
               <div className="flex items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand/10 text-brand font-bold">{c.name.slice(0, 2).toUpperCase()}</span>

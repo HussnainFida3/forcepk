@@ -30,8 +30,6 @@ export const featuredTalent = [
   { name: "Bilal A.", role: "Heavy Driver", exp: "6 yrs", city: "Rawalpindi, PK", match: 85, skills: ["Trailer", "Bus"] },
 ] as const;
 
-export const brands = ["Atlas Group", "Vertex Industries", "Summit Facilities", "Orion Logistics", "Delta Construction", "Zenith Corp", "Pioneer MEP", "Global Works"] as const;
-
 export const steps = [
   { n: 1, t: "Post Requirement", d: "An employer submits its manpower requirement." },
   { n: 2, t: "Requirement Verified", d: "ForcePK reviews and verifies the requirement." },
