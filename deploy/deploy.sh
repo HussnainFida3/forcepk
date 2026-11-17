@@ -57,7 +57,7 @@ tar czf - \
   app components lib prisma public scripts deploy types \
   auth.ts auth.config.ts middleware.ts next.config.mjs \
   package.json package-lock.json postcss.config.mjs tailwind.config.ts tsconfig.json \
-  | ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p $REMOTE_DIR && tar xzf - -C $REMOTE_DIR"
+  | ssh "${SSH_OPTS[@]}" "$HOST" "mkdir -p $REMOTE_DIR && rm -rf $REMOTE_DIR/app $REMOTE_DIR/lib $REMOTE_DIR/components && tar xzf - -C $REMOTE_DIR"
 
 # ── 2. Install, (migrate), generate, build, restart ──
 echo "② Installing + building on server…"
